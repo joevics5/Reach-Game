@@ -60,7 +60,7 @@ var CH={
   ['Coworking Space','Shared office',2,'Break into an established crowd.']
  ])
 };
-var CATS={toasting:{name:'Toasting',cls:'t',blurb:'Approach someone you like and see where the conversation goes.'},friends:{name:'Make Friends',cls:'f',blurb:'Meet strangers, join groups, and turn a hello into a friend.'}};
+var CATS={toasting:{name:'Rizz',cls:'t',blurb:'Approach someone you like and see where the conversation goes.'},friends:{name:'Make Friends',cls:'f',blurb:'Meet strangers, join groups, and turn a hello into a friend.'}};
 
 /* ---------- characters ---------- */
 var NAMES={woman:['Amara','Chloe','Priya','Sofia','Maya','Nia','Elena','Hannah','Zoe','Imani','Lucy','Aisha','Camila','Yuki','Fatima','Grace'],man:['Daniel','Marcus','Kofi','Liam','Ravi','Mateo','Ethan','Tobi','Sam','Noah','Jamal','Leo','Hiro','Omar','Adrian','Felix']};
@@ -85,9 +85,10 @@ var ARCH=[
  {id:'hard',label:'The Hard-to-Impress',d:'Sceptical, has heard every line, needs real engagement before showing any interest.',w:2,b:-8},
  {id:'warm',label:'The Warm Friendly One',d:'Naturally chatty and kind but does not mean romantic interest by it. May politely keep things friendly.',w:2,b:-6}
 ];
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function pickArch(){var t=[];ARCH.forEach(function(a){for(var i=0;i<a.w;i++)t.push(a)});return pk(t)}
-function makePersona(target){
- var a=pickArch(),notInto=Math.random()<.2;
+function makePersona(target,arch){
+ var a=arch||pickArch(),notInto=Math.random()<.2;
  var interest=clamp(Math.round(34+a.b+Math.random()*22),8,64),comfort=clamp(Math.round(40+Math.random()*18),20,70),patience=clamp(Math.round(58+Math.random()*22),30,90);
  if(notInto)interest=Math.round(8+Math.random()*8);
  var hob=[],pool=HOBBIES.slice();for(var i=0;i<3;i++)hob.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
@@ -100,6 +101,20 @@ function makePersona(target){
   interest:interest,comfort:comfort,patience:patience,i0:interest,
   look:{sk:pk(SKIN),sh:pk(TOPC),pn:pk(BOTC),hair:pk(HAIRC),style:hairStyle,beard:!woman&&Math.random()<.4,glasses:Math.random()<.25,woman:woman,dress:woman&&Math.random()<.4},
   stool:pk([-6,-4,-2]),faceOut:Math.random()<.5};
+}
+
+/* Five different people at the bar tonight: different personalities, names, looks and seats. */
+var SLOTS=[
+ {x:-7,y:-.08,z:-4.9,seat:1,st:'phone',h:Math.PI+.25,where:'at the bar'},
+ {x:-3.2,y:-.08,z:-4.9,seat:1,st:'drink',h:Math.PI-.3,where:'at the bar'},
+ {x:1.0,y:-.08,z:-4.9,seat:1,st:'phone',h:Math.PI+.1,where:'at the bar'},
+ {x:-8.8,y:-.45,z:3.4,seat:1,st:'drink',h:Math.PI/2,where:'in a booth'},
+ {x:3.6,y:0,z:.4,seat:0,st:'drink',h:-1.2,where:'standing by the pillar'}
+];
+function makeCast(target){
+ var archs=shuffle(ARCH.slice()).slice(0,5),names=shuffle(NAMES[target].slice()),tops=shuffle(TOPC.slice()),skins=shuffle(SKIN.slice()),
+  styles=shuffle(target==='woman'?['long','bun','curly','afro','ponytail','short']:['short','buzz','curly','afro','short']),slots=shuffle(SLOTS.slice());
+ return archs.map(function(a,i){var p=makePersona(target,a);p.name=names[i];p.look.sh=tops[i];p.look.sk=skins[i%skins.length];p.look.style=styles[i%styles.length];p.slot=slots[i];return p});
 }
 
 /* ---------- AI ---------- */
@@ -214,7 +229,7 @@ function openBrief(id){
 
 /* ---------- play ---------- */
 function startChallenge(){
- var p=makePersona(G.target);
+ G.cast=makeCast(G.target);var p=G.cast[0];
  G.p=p;G.hist=[];G.notes=[];G.turn=0;G.status='explore';G.end=null;G.busy=false;G.cur={interest:p.interest,comfort:p.comfort,patience:p.patience};G.approach='';G.rules='';
  $('log').innerHTML='';$('hint').hidden=true;$('err').hidden=true;$('timebox').hidden=true;$('timebar').style.width='100%';
  $('chname').textContent='The Copper Lantern';$('chsub').textContent='Evening. Soft music. Plenty of people.';
@@ -223,7 +238,7 @@ function startChallenge(){
  $('goal').innerHTML='<b>Goal:</b> '+esc(CH[G.cat][G.id-1].goal);
  var gb=$('gbadge');gb.className='badge'+(G.guide?' on':'');gb.textContent=G.guide?'Guide Mode on (locked)':'Guide Mode off (locked)';
  var side=G.target==='woman'?'her':'him';
- $('log').innerHTML='<div class="pre"><b>Look around.</b> You just walked in. Someone is sitting at the bar. Walk over when you are ready, then tap Talk.'+(G.guide?'<br><br><b style="color:var(--amber)">Coach:</b> Take a moment first. Notice what '+who+' is doing and where you can approach without startling '+who+'. A low-pressure opener beats a clever one.':'')+'</div>';
+ $('log').innerHTML='<div class="pre"><b>Look around.</b> You just walked in. Five '+(G.target==='woman'?'women':'men')+' are out tonight, each on their own. Choose who you want to talk to, walk over when you are ready, then tap Talk.'+(G.guide?'<br><br><b style="color:var(--amber)">Coach:</b> Take a moment first. Notice what '+who+' is doing and where you can approach without startling '+who+'. A low-pressure opener beats a clever one.':'')+'</div>';
  var t=$('tip');t.style.opacity=1;setTimeout(function(){t.style.opacity=0},7000);
  show('play');
  setupPlay();
@@ -234,6 +249,8 @@ function scrollLog(){var l=$('log');l.scrollTop=l.scrollHeight}
 function beginTalk(){
  if(G.status!=='explore')return;
  G.status='approaching';$('talk').classList.remove('on');
+ G.hist=[];G.notes=[];G.turn=0;G.cur={interest:G.p.interest,comfort:G.p.comfort,patience:G.p.patience};
+ W.herSt=W.girls[W.sel].st;W.herMode=W.herSt;
  var dir=approachDir();G.approach=dir==='front'?'from the front':dir==='behind'?'from behind her or his back':'from the side';
  G.rules=rules(G.p,G.me,G.guide,approachLine(G.p,dir));
  walkToTalk(function(){
@@ -584,14 +601,19 @@ function setupPlay(){
  W.me=makeChar(meLook);W.me.g.position.set(0,0,6.4);W.me.g.rotation.y=Math.PI;W.dyn.add(W.me.g);W.mePos=V(0,0,6.4);W.meH=Math.PI;
  var nm=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(256,64,function(x,w,h){x.fillStyle='rgba(255,180,84,.95)';x.beginPath();x.moveTo(24,2);x.arcTo(w-2,2,w-2,h-2,20);x.arcTo(w-2,h-2,2,h-2,20);x.arcTo(2,h-2,2,2,20);x.arcTo(2,2,w-2,2,20);x.fill();x.fillStyle='#2a1700';x.font='700 32px Figtree,Arial';x.textAlign='center';x.textBaseline='middle';x.fillText('You',w/2,h/2+2)}),transparent:true,depthTest:false}));
  nm.scale.set(1.2,.3,1);nm.position.set(0,2.3,0);nm.renderOrder=20;W.me.g.add(nm);
- // her/him
- var l=p.look;l.hair=l.hair;W.her=makeChar(l);W.her.seat=true;W.herBase=V(p.stool,0,-4.9);
- var fy=p.faceOut?Math.PI*(Math.random()<.5?.15:-.15):Math.PI+(Math.random()<.5?.35:-.35);
- W.herH=fy;W.her.g.position.set(p.stool,-.08+.0,-4.9);W.her.g.rotation.y=fy;W.dyn.add(W.her.g);
- W.herSt=pk(['phone','drink','phone']);W.herMode=W.herSt;
+ // the five: each has a seat, a mood and a name tag
+ W.girls=[];
+ G.cast.forEach(function(gp){
+  var sl=gp.slot,c=makeChar(gp.look);c.seat=!!sl.seat;c.moodT=.1;
+  c.g.position.set(sl.x,sl.y,sl.z);c.g.rotation.y=sl.h;W.dyn.add(c.g);
+  var tag=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(256,64,function(x,w,h){x.fillStyle='rgba(20,14,24,.78)';x.beginPath();x.moveTo(22,4);x.arcTo(w-4,4,w-4,h-4,18);x.arcTo(w-4,h-4,4,h-4,18);x.arcTo(4,h-4,4,4,18);x.arcTo(4,4,w-4,4,18);x.fill();x.fillStyle='#fff3e0';x.font='700 30px Figtree,Arial';x.textAlign='center';x.textBaseline='middle';x.fillText(gp.name,w/2,h/2+2)}),transparent:true,depthTest:false}));
+  tag.scale.set(1.15,.29,1);tag.position.set(0,2.35,0);tag.renderOrder=20;c.g.add(tag);
+  W.girls.push({p:gp,c:c,base:V(sl.x,0,sl.z),h:sl.h,st:sl.st});
+ });
+ W.sel=-1;selectGirl(0);W.herMode=W.herSt;
  // neighbours at bar
  [-8.5,-6.5,-4.5,-2.5,-0.5,1.5].forEach(function(x){
-  if(Math.abs(x-p.stool)<1.9)return;
+  if(G.cast.some(function(gp){return gp.slot.z<-4&&Math.abs(gp.slot.x-x)<1.9}))return;
   if(Math.random()<.55){var c=makeChar(randLook(Math.random()<.5));c.seat=true;c.g.position.set(x,-.08,-4.9);c.g.rotation.y=Math.PI+(Math.random()-.5)*.6;W.dyn.add(c.g);W.npcs.push({c:c,st:pk(['drink','talk','phone']),t0:Math.random()*10})}
  });
  // bartender
@@ -602,16 +624,20 @@ function setupPlay(){
  grp(7,-3,3,1.0,'talk');grp(9.5,-6.4,2,.95,'talk');grp(5.2,3.4,4,1.0,'talk');
  // seated pairs
  function seated(x,z,h){var c=makeChar(randLook(Math.random()<.5));c.seat=true;c.g.position.set(x,-.45,z);c.g.rotation.y=h;W.dyn.add(c.g);W.npcs.push({c:c,st:'talk',t0:Math.random()*10})}
- seated(-8.8,3.4,Math.PI/2);seated(-7.2,3.4,-Math.PI/2);
  seated(-11.3,6.4,Math.PI/2*1.0);seated(-11.3,5.4,Math.PI/2);
  seated(-11.3,-4.2,Math.PI/2);
  // wanderers
  for(var i=0;i<2;i++){var c=makeChar(randLook(i%2===0));c.g.position.set(-3,0,2);W.dyn.add(c.g);W.npcs.push({c:c,wander:true,wp:[V(-6,0,1),V(3,0,6),V(8,0,1.5),V(-2,0,4),V(2,0,-2)],wi:i,pause:Math.random()*2,t0:i})}
  // mood ring
- var ring=new THREE.Mesh(new THREE.RingGeometry(.6,.78,36),new THREE.MeshBasicMaterial({color:0xffb454,transparent:true,opacity:.75,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(p.stool,.04,-4.4);ring.visible=!!G.guide;W.dyn.add(ring);W.ring=ring;
+ var ring=new THREE.Mesh(new THREE.RingGeometry(.6,.78,36),new THREE.MeshBasicMaterial({color:0xffb454,transparent:true,opacity:.75,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(W.herBase.x,.04,W.herBase.z+.5);ring.visible=!!G.guide;W.dyn.add(ring);W.ring=ring;
  // marker
- var mk=cn(W.dyn,.22,.5,0xffb454,p.stool,2.6,-4.9,MB(0xffb454));mk.rotation.z=Math.PI;mk.visible=!!G.guide;W.marker=mk;
+ var mk=cn(W.dyn,.22,.5,0xffb454,W.herBase.x,2.9,W.herBase.z,MB(0xffb454));mk.rotation.z=Math.PI;mk.visible=!!G.guide;W.marker=mk;
  resize();
+}
+function selectGirl(i){
+ var g=W.girls[i];if(!g||W.sel===i)return;
+ W.sel=i;W.her=g.c;W.herBase=g.base;W.herH=g.h;W.herSt=g.st;G.p=g.p;
+ if(W.ring)W.ring.position.set(g.base.x,.04,g.base.z+.5);
 }
 function approachDir(){
  var h=W.herH,f=V(Math.sin(h),0,Math.cos(h)),v=V(W.mePos.x-W.herBase.x,0,W.mePos.z-W.herBase.z).normalize(),d=f.dot(v);
@@ -678,8 +704,8 @@ function frame(now){
  requestAnimationFrame(frame);
  if(!W.on||!W.run||!W.me)return;
  var dt=Math.min(.05,((now-W.last)/1000)||0);W.last=now;W.time+=dt;var t=W.time;
- updMe(dt,t);updHer(dt,t);updNpcs(dt,t);updCam(dt);
- if(W.marker){W.marker.position.y=2.55+Math.sin(t*3)*.12;W.marker.visible=!!G.guide&&G.status==='explore'}
+ updMe(dt,t);updHer(dt,t);updGirls(dt,t);updNpcs(dt,t);updCam(dt);
+ if(W.marker){W.marker.position.x=W.herBase.x;W.marker.position.z=W.herBase.z;W.marker.position.y=2.9+Math.sin(t*3)*.12;W.marker.visible=!!G.guide&&G.status==='explore'}
  W.r.render(W.scene,W.cam);
 }
 function updMe(dt,t){
@@ -708,7 +734,8 @@ function updMe(dt,t){
  pose(me,st,dt,moved,W.time);
  // talk prompt
  if(G.status==='explore'){
-  var dx2=pos.x-W.herBase.x,dz2=pos.z-W.herBase.z,near=Math.sqrt(dx2*dx2+dz2*dz2)<3.3;
+  var bi=0,bd=1e9;W.girls.forEach(function(g,i){var d=Math.hypot(pos.x-g.base.x,pos.z-g.base.z);if(d<bd){bd=d;bi=i}});
+  selectGirl(bi);var near=bd<3.3;
   $('talk').classList.toggle('on',near);if(near)$('talk').textContent='Talk to '+G.p.name;
  }
  $('joy').classList.toggle('off',G.status!=='explore');
@@ -723,13 +750,25 @@ function updHer(dt,t){
    if(d>.2){var s=1.6*dt;var np=V(px+dx/d*s,0,pz+dz/d*s);h.g.position.x=np.x;h.g.position.z=np.z;h.g.rotation.y+=wrapA(Math.atan2(dx,dz)-h.g.rotation.y)*Math.min(1,dt*6);pose(h,'walk',dt,s,t)}else h.g.visible=false}
   if(W.ring)W.ring.visible=false;return;
  }
- if(G.status==='explore'){h.g.rotation.y=W.herH;var pd=Math.sqrt(Math.pow(W.mePos.x-W.herBase.x,2)+Math.pow(W.mePos.z-W.herBase.z,2));h.look=(pd<5&&((t*.23+h.po)%1)<.22)?V(W.mePos.x,1.7,W.mePos.z):null;pose(h,W.herSt,dt,0,t);return}
+ if(G.status==='explore')return;
  h.look=V(W.mePos.x,1.72,W.mePos.z);
  // turn to player
  var fh=Math.atan2(W.mePos.x-W.herBase.x,W.mePos.z-W.herBase.z);
  h.g.rotation.y+=wrapA(fh-h.g.rotation.y)*Math.min(1,dt*3.5);
  pose(h,W.speak>0||W.herMode==='talk'?'talk':'idle',dt,0,t);
  if(W.ring){W.ring.visible=!!G.guide&&G.status!=='ended'||(G.guide&&G.status==='ended')}
+}
+function updGirls(dt,t){
+ (W.girls||[]).forEach(function(g){
+  var c=g.c;
+  if(G.status!=='explore'&&c===W.her)return;
+  if(G.status==='explore'||c!==W.her){
+   c.g.rotation.y+=wrapA(g.h-c.g.rotation.y)*Math.min(1,dt*3);
+   var pd=Math.hypot(W.mePos.x-g.base.x,W.mePos.z-g.base.z);
+   c.look=(pd<5&&((t*.23+c.po)%1)<.22)?V(W.mePos.x,1.7,W.mePos.z):null;
+   pose(c,g.st,dt,0,t);
+  }
+ });
 }
 function updNpcs(dt,t){
  W.npcs.forEach(function(n){

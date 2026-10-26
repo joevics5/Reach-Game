@@ -1,7 +1,7 @@
 // Static HTML shell for the game screens. The game script in public/game/game.js binds to these ids.
 export const MARKUP = `<div class="app">
   <div class="top">
-    <div class="brand"><i></i>First Words</div>
+    <div class="brand"><i></i>Reach</div>
     <button class="ghost" id="back" hidden>Back</button>
   </div>
 
@@ -12,7 +12,7 @@ export const MARKUP = `<div class="app">
       <p class="lede">Walk into real situations, talk to characters who have their own moods and limits, and find out how it went.</p>
     </div>
     <div class="cards">
-      <button class="card t" data-cat="toasting"><div class="eyebrow">Romance</div><h2>Toasting</h2><p>Approach someone you like and see where the conversation goes.</p><div class="meta"><span class="pill c" id="p-toasting">0 of 20</span><span class="pill">1 playable</span></div><div class="num">20</div></button>
+      <button class="card t" data-cat="toasting"><div class="eyebrow">Romance</div><h2>Rizz</h2><p>Approach someone you like and see where the conversation goes.</p><div class="meta"><span class="pill c" id="p-toasting">0 of 20</span><span class="pill">1 playable</span></div><div class="num">20</div></button>
       <button class="card f" data-cat="friends"><div class="eyebrow">Friendship</div><h2>Make Friends</h2><p>Meet strangers, join groups, and turn a hello into a friend.</p><div class="meta"><span class="pill c" id="p-friends">0 of 20</span><span class="pill">Coming soon</span></div><div class="num">20</div></button>
     </div>
     <div class="how">

@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "First Words",
+  title: "Reach",
   description: "A social simulation game. Walk into real situations, talk to people with their own moods and limits, and see how it went.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "First Words", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Reach", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

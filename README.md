@@ -1,8 +1,8 @@
-# First Words
+# Reach
 
-A social simulation game. Pick a category (Toasting, Make Friends), choose a challenge, walk into a 3D scene, and talk to a character who has their own personality, mood and limits. You get a review at the end.
+A social simulation game. Pick a category (Rizz, Make Friends), choose a challenge, walk into a 3D scene, and talk to a character who has their own personality, mood and limits. You get a review at the end.
 
-Right now: the dashboard, both challenge lists, and challenge 1 of Toasting ("Break the Ice at the Bar", approach a woman or a man). The other 39 challenges are placeholders.
+Right now: the dashboard, both challenge lists, and challenge 1 of Rizz ("Break the Ice at the Bar", approach a woman or a man). The other 39 challenges are placeholders.
 
 ## Stack
 
