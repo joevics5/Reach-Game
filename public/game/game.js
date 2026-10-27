@@ -495,6 +495,7 @@ function makeChar(o){
  c.glass=new THREE.Group();cy(c.glass,.036,.1,0xe8d8b0,0,0,0,new THREE.MeshLambertMaterial({color:0xd9a441,transparent:true,opacity:.85}));c.glass.position.set(0,-.35,.03);c.glass.visible=false;hand.add(c.glass);
  var sc=(wm?.96:1.0)+Math.random()*.07;g.scale.setScalar(sc);
  var s=mesh(g,SHADOW,SHM,0,.03,0);s.rotation.x=-Math.PI/2;
+ if(window.ReachPeople)ReachPeople.attach(c,o);
  return c;
 }
 var SHADOW,SHM;
@@ -562,6 +563,7 @@ function pose(c,st,dt,dist,t){
  c.brows[0].position.y=.315+m*.012;c.brows[1].position.y=.315+m*.012;
  c.brows[0].rotation.z=-dn*.35;c.brows[1].rotation.z=dn*.35;
  c.phone.visible=phone;c.glass.visible=glass;
+ if(c.sync)c.sync();
 }
 function randLook(woman){return {sk:pk(SKIN),sh:pk(TOPC),pn:pk(BOTC),hair:pk(HAIRC),style:woman?pk(['long','bun','curly','afro','ponytail','short']):pk(['short','buzz','curly','afro','short']),beard:!woman&&Math.random()<.35,glasses:Math.random()<.2,woman:woman,dress:woman&&Math.random()<.3}}
 
@@ -841,5 +843,5 @@ function updCam(dt){
 })();
 if(!initGL()){$('stage').innerHTML='<div class="pre">The 3D view needs WebGL, which this browser does not offer.</div>'}
 renderDash();show('dash');
-window.__FW={G:G,W:W,beginTalk:beginTalk,send:send,finish:finishChat,setSample:function(s){SAMPLE=s}};
+window.__FW={G:G,W:W,makeChar:makeChar,pose:pose,beginTalk:beginTalk,send:send,finish:finishChat,setSample:function(s){SAMPLE=s}};
 })();

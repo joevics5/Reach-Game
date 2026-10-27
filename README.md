@@ -35,6 +35,16 @@ public/vendor/three.min.js
 lib/                    mock replies, rate limiter
 ```
 
+## Real character models
+
+Characters are procedural by default. Drop rigged humanoid `.glb` files into `public/models/` and list them in `public/models/manifest.json`:
+
+```json
+{ "allowRepeat": false, "models": [ { "file": "ava.glb", "gender": "f" }, { "file": "ben.glb", "gender": "m" } ] }
+```
+
+`public/game/people.js` hides the procedural body and drives the model's bones from the same pose system (walk, sit, talk gestures, gaze, blink and mouth morphs when present), so no animation clips are needed. Any Mixamo-style skeleton works (Mixamo, Ready Player Me, and similar bone names). With `allowRepeat: false`, a character only uses a model if there is an unused one for that gender, so you never get a row of clones. Try the two bundled samples with `?models=samples` (they are three.js example models and do not suit the bar).
+
 ## Notes
 
 - Voice input uses the browser's speech recognition (best in Chrome and Safari). It needs HTTPS or localhost.

@@ -1,5 +1,5 @@
 // Minimal service worker: lets the app install and keeps static game files available offline.
-const CACHE = "reach-v2";
+const CACHE = "reach-v3";
 const ASSETS = ["/", "/game/game.js", "/game/ai.js", "/vendor/three.min.js", "/icon.svg"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

@@ -1,0 +1,7 @@
+{
+ "allowRepeat": true,
+ "models": [
+  {"file": "samples/woman1.glb", "gender": "f", "name": "Michelle (three.js example, Mixamo)"},
+  {"file": "samples/man1.glb", "gender": "m", "name": "Ready Player Me sample"}
+ ]
+}
