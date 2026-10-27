@@ -119,15 +119,8 @@ function makeCast(target){
 
 /* ---------- AI ---------- */
 var SAMPLE=null,MAXT=14;
-/* Server AI client: the API key stays on the server (app/api/ai/route.ts). */
-SAMPLE={json:async function(input,opts){
- var turns=typeof input==='string'?[{role:'user',content:input}]:input;
- var res;
- try{res=await fetch('/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({turns:turns,tier:(opts&&opts.modelTier)||'quick'})})}catch(e){throw {code:'network'}}
- if(res.status===429)throw {code:'rate_limited'};
- if(!res.ok)throw {code:'server_'+res.status};
- return res.json();
-}};
+/* AI: Gemini with the key saved in Settings, otherwise the server route (see ai.js). */
+SAMPLE={json:function(input,opts){return window.ReachAI.call(input,(opts&&opts.modelTier)==='default'?'default':'quick')}};
 function lvl(p){return p.notInto?'very low: '+p.name+' '+p.notReason:p.i0>=48?'moderate':p.i0>=36?'low to moderate':'low'}
 function rules(p,me,guide,approach){
  var pr=p.gender==='woman'?{s:'she',o:'her',p:'her'}:{s:'he',o:'him',p:'his'};
@@ -181,16 +174,40 @@ function localReview(){
 var G={screen:'dash',cat:null,id:null,me:'man',target:'woman',guide:false,adult:false,p:null,hist:[],notes:[],cur:{},turn:0,status:'idle',end:null,approach:'',rules:'',busy:false};
 function show(name){
  G.screen=name;
- ['dash','list','brief','play','review'].forEach(function(s){$('s-'+s).hidden=(s!==name)});
+ ['dash','list','brief','play','review','settings'].forEach(function(s){$('s-'+s).hidden=(s!==name)});
  var b=$('back');b.hidden=(name==='dash'||name==='review'||(name==='play'&&G.status==='talk'));
+ $('gear').hidden=(name==='play'||name==='settings');
  if(name==='play'){startRender();resize()}else stopRender();
  window.scrollTo(0,0);
 }
 $('back').addEventListener('click',function(){
- if(G.screen==='list')show('dash');
+ if(G.screen==='settings')show(G.prevScreen||'dash');
+ else if(G.screen==='list')show('dash');
  else if(G.screen==='brief')openList(G.cat);
  else if(G.screen==='play'){cancelMic();stopRender();openList(G.cat)}
 });
+/* ---------- settings ---------- */
+function renderSettings(){
+ var st=window.ReachAI.load(),opts=window.ReachAI.MODELS.map(function(m){return '<option value="'+m+'">'}).join('');
+ $('settings').innerHTML='<div><div class="eyebrow">Settings</div><h1>AI connection</h1><p class="lede">Conversations and reviews are written by Gemini using your own API key. The key is saved only in this browser and is sent only to Google.</p></div>'+
+ '<div class="box"><h3>Gemini API key</h3><input class="fld" id="st-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key (starts with AIza...)" value="'+esc(st.key)+'"><label class="chk"><input type="checkbox" id="st-show"> Show key</label>'+
+ '<p class="note">Get a free key at aistudio.google.com/apikey. Without a key the game uses demo replies.</p></div>'+
+ '<div class="box"><h3>Models</h3><label class="lbl" for="st-q">Character replies (fast)</label><input class="fld" id="st-q" list="st-models" value="'+esc(st.quick)+'"><label class="lbl" for="st-r">End-of-challenge review (smarter)</label><input class="fld" id="st-r" list="st-models" value="'+esc(st.review)+'"><datalist id="st-models">'+opts+'</datalist>'+
+ '<p class="note">Pick from the list or type any model ID.</p></div>'+
+ '<div class="btns"><button class="cta" id="st-save">Save</button><button class="ghost" id="st-test">Test connection</button><button class="ghost" id="st-clear">Remove key</button></div><div class="note" id="st-msg" aria-live="polite"></div>';
+ function msg(t,ok){var m=$('st-msg');m.textContent=t;m.style.color=ok===true?'var(--good)':ok===false?'var(--bad)':''}
+ function read(){return {key:$('st-key').value.trim(),quick:$('st-q').value.trim()||'gemini-3.5-flash-lite',review:$('st-r').value.trim()||'gemini-3.8-flash'}}
+ $('st-show').addEventListener('change',function(){$('st-key').type=this.checked?'text':'password'});
+ $('st-save').addEventListener('click',function(){msg(window.ReachAI.save(read())?'Saved.':'Could not save: this browser is blocking storage.',window.ReachAI.save(read()))});
+ $('st-clear').addEventListener('click',function(){var r=read();r.key='';window.ReachAI.save(r);$('st-key').value='';msg('Key removed. The game will use demo replies.',true)});
+ $('st-test').addEventListener('click',async function(){
+  var r=read();if(!r.key){msg('Enter a key first.',false);return}
+  msg('Testing '+r.quick+'...');
+  try{var ok=await window.ReachAI.test(r.key,r.quick);window.ReachAI.save(r);msg(ok?'Connected. '+r.quick+' answered, and the settings are saved.':'The model answered, but not as expected. Try again.',ok)}
+  catch(e){msg(e.code==='bad_key'?'Google rejected the request: '+(e.detail||'check the key')+'.':e.code==='bad_model'?'Model "'+r.quick+'" was not found. Check the model ID.':e.code==='rate_limited'?'Rate limit reached. Wait a minute and try again.':e.code==='network'?'Could not reach Google. Check your connection.':'Test failed ('+e.code+')'+(e.detail?': '+e.detail:''),false)}
+ });
+}
+$('gear').addEventListener('click',function(){G.prevScreen=G.screen;renderSettings();show('settings')});
 function best(cat,id){var d=(P.done[cat]||{})[id];return d?d.best:null}
 function renderDash(){
  ['toasting','friends'].forEach(function(c){var n=0;CH[c].forEach(function(x){var b=best(c,x.id);if(b==='success'||b==='graceful')n++});$('p-'+c).textContent=n+' of 20'});
@@ -217,7 +234,7 @@ function openBrief(id){
  '<div class="box"><h3>You are</h3><div class="seg" id="sg-me"><button data-v="man">A man</button><button data-v="woman">A woman</button></div><h3 style="margin-top:12px">You are approaching</h3><div class="seg" id="sg-t"><button data-v="woman">A woman</button><button data-v="man">A man</button></div><p class="note" style="margin-top:8px">Their personality, reactions and way of talking change with who you pick. Each attempt is a different person in a different mood.</p></div>'+
  '<div class="box"><div class="tog"><button class="sw" id="sw" role="switch" aria-checked="false" aria-labelledby="swl"></button><div><b id="swl">Guide Mode</b><p class="note">A coach gives hints about timing and tone, and a mood ring shows how they feel. It does not write your lines.<br><b class="warn">Locked once you start. You cannot switch it mid-conversation.</b></p></div></div></div>'+
  '<label class="chk"><input type="checkbox" id="adult"> <span>I am 18 or older. Conversations are PG-13 and the characters are adults.</span></label>'+
- (hasAI?'<p class="note">Conversations are written by Claude. Nothing you type is stored on the server.</p>':'<p class="note warn">The AI conversation is not available, so this challenge cannot start.</p>')+
+ (hasAI?'<p class="note">Conversations are written by '+esc(window.ReachAI.label())+'. '+(window.ReachAI.active()?'':'Add a Gemini key in Settings for real conversations. ')+'</p>':'<p class="note warn">The AI conversation is not available, so this challenge cannot start.</p>')+
  '<button class="cta" id="go"'+(hasAI?'':' disabled')+'>Walk in</button>';
  function seg(id,key){var el=$(id);el.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(G[key]===b.dataset.v));b.addEventListener('click',function(){G[key]=b.dataset.v;el.querySelectorAll('button').forEach(function(q){q.setAttribute('aria-pressed',String(G[key]===q.dataset.v))})})})}
  seg('sg-me','me');seg('sg-t','target');
@@ -289,7 +306,7 @@ async function send(){
  try{r=fixTurn(await callTurn())}
  catch(e){
   tp.remove();G.hist.pop();G.turn--;G.busy=false;$('send').disabled=false;$('msg').disabled=false;
-  var m=(e&&e.code==='rate_limited')?'Too many requests right now. Wait a moment and send again.':'The reply did not come through. Your message is back in the box, so you can send it again.';
+  var m=(e&&e.code==='rate_limited')?'Too many requests right now. Wait a moment and send again.':(e&&e.code==='bad_key')?'Gemini rejected the key or request'+(e.detail?' ('+e.detail+')':'')+'. Check Settings.':(e&&e.code==='bad_model')?'That Gemini model was not found. Check Settings.':'The reply did not come through. Your message is back in the box, so you can send it again.';
   setErr(m);ta.value=txt;autoGrow();ta.focus();
   var last=$('log').querySelector('.m.me:last-of-type');var mes=$('log').querySelectorAll('.m.me');if(mes.length)mes[mes.length-1].remove();
   return;

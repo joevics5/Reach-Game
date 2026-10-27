@@ -2,7 +2,7 @@
 export const MARKUP = `<div class="app">
   <div class="top">
     <div class="brand"><i></i>Reach</div>
-    <button class="ghost" id="back" hidden>Back</button>
+    <div class="topbtns"><button class="ghost" id="gear" aria-label="Settings">Settings</button><button class="ghost" id="back" hidden>Back</button></div>
   </div>
 
   <section class="screen" id="s-dash">
@@ -53,6 +53,10 @@ export const MARKUP = `<div class="app">
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="screen" id="s-settings" hidden>
+    <div class="brief" id="settings"></div>
   </section>
 
   <section class="screen" id="s-review" hidden>

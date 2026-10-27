@@ -149,3 +149,8 @@ h1,h2,h3{margin:0;text-wrap:balance}
 @keyframes sp{to{transform:rotate(360deg)}}
 .err{color:var(--bad);font-size:13px;padding:2px 14px 8px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.topbtns{display:flex;gap:8px}
+.fld{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--ink);font:inherit;font-size:15px;margin-top:6px}
+.fld:focus{outline:none;border-color:var(--amber)}
+.lbl{display:block;font-size:13px;color:var(--mute);margin-top:12px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mute)}
