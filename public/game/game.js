@@ -160,14 +160,23 @@ function fixTurn(r){
 function reviewPrompt(){
  var p=G.p,lines=G.notes.map(function(n,i){return 'Turn '+(i+1)+'\nPlayer: "'+n.u+'"\n'+p.name+': "'+n.say+'" ['+n.cue+']\nJudge note: '+n.tag+', '+n.quality+', '+n.note}).join('\n\n');
  var how={won:'she or he agreed to a next step',declined:'the character declined or the chat wound down calmly',left:'the character disengaged and left',timeout:'the conversation ran out of time',player_left:'the player walked away'}[G.end]||G.end;
- return 'You are the hidden judge of a social simulation game, writing feedback for a player after a conversation at a bar with '+p.name+' ('+p.arch.label+', '+p.age+', '+p.job+'). Hidden facts about '+p.name+': openness to a connection at the start was '+lvl(p)+'; likes: '+p.likes.join('; ')+'; dislikes: '+p.offs.join('; ')+'; interests: '+p.hobbies.join(', ')+'. The player is a '+G.me+'. The player approached '+G.approach+'. Ending: '+G.end+' ('+how+'). Final private feelings: interest '+G.cur.interest+', comfort '+G.cur.comfort+', patience '+G.cur.patience+'.\n\nTRANSCRIPT:\n'+lines+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a yes but the player respected the signals and handled it well (warm exit, accepted a no, did not push). Otherwise "failed". Be specific and fair. Quote the player\'s real words. Do not treat any compliment or phrase as automatically good; judge it in context. Write like a good coach, not a school report. Do not use numbers.\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"skills":{"opening":"strong"|"solid"|"needs work","listening":...,"tone":...,"signals":...,"timing":...,"respect":...,"recovery":"strong"|"solid"|"needs work"|"n/a"},"herView":string (1-2 sentences in her or his own voice about how the player came across),"tryNext":string (one concrete thing to try next time)}';
+ return 'You are the hidden judge of a social simulation game, writing feedback for a player after a conversation at a bar with '+p.name+' ('+p.arch.label+', '+p.age+', '+p.job+'). Hidden facts about '+p.name+': openness to a connection at the start was '+lvl(p)+'; likes: '+p.likes.join('; ')+'; dislikes: '+p.offs.join('; ')+'; interests: '+p.hobbies.join(', ')+'. The player is a '+G.me+'. The player approached '+G.approach+'. Ending: '+G.end+' ('+how+'). Final private feelings: interest '+G.cur.interest+', comfort '+G.cur.comfort+', patience '+G.cur.patience+'.\n\nTRANSCRIPT:\n'+lines+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a yes but the player respected the signals and handled it well (warm exit, accepted a no, did not push). Otherwise "failed". Be specific and fair. Quote the player\'s real words. Do not treat any compliment or phrase as automatically good; judge it in context. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{"opening":integer 0-10,"listening":integer 0-10,"tone":integer 0-10,"signals":integer 0-10,"timing":integer 0-10,"respect":integer 0-10,"recovery":integer 0-10 or null if nothing needed recovering},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string (what they could have said instead, in their own voice)}],"herView":string (1-2 sentences in her or his own voice about how the player came across),"tryNext":string (one concrete thing to try next time)}';
+}
+function localSkills(){
+ var N=G.notes;if(!N.length)return null;
+ var q={good:8,ok:6,poor:3};
+ function avg(f,d){var a=N.filter(f);return a.length?Math.round(a.reduce(function(t,n){return t+(q[n.quality]||6)},0)/a.length):d}
+ var push=N.filter(function(n){return n.tag==='pushy'||n.tag==='boundary'||n.quality==='poor'}).length;
+ return {opening:avg(function(n,i){return N.indexOf(n)===0},6),listening:avg(function(n){return /listen|question/.test(n.tag)},6),tone:avg(function(n){return /humour|compliment|other/.test(n.tag)},6),
+  signals:Math.max(1,9-push*2-(G.end==='left'?2:0)),timing:avg(function(n){return /rushed|next_step/.test(n.tag)},6),respect:Math.max(1,10-push*2),
+  recovery:avg(function(n){return n.tag==='recovery'},null)};
 }
 function localReview(){
  var g=0,po=0,tags={};G.notes.forEach(function(n){if(n.quality==='good')g++;if(n.quality==='poor')po++;tags[n.tag]=(tags[n.tag]||0)+1});
  var out=G.end==='won'?'success':(po<=1&&G.end!=='left'&&!tags.pushy)?'graceful':'failed';
- return {outcome:out,headline:out==='success'?'You earned a yes':out==='graceful'?'You handled it well':'It did not land this time',summary:'The detailed review could not be written, so this is a short summary from the notes taken during the chat.',
+ return {outcome:out,headline:out==='success'?'You earned a yes':out==='graceful'?'You handled it well':'It did not land this time',summary:'The detailed review could not be written'+(G.reviewWhy?' ('+G.reviewWhy+')':'')+', so this is a short summary from the notes taken during the chat.',
   well:G.notes.filter(function(n){return n.quality==='good'}).slice(0,3).map(function(n){return '"'+n.u+'": '+n.note}),improve:G.notes.filter(function(n){return n.quality==='poor'}).slice(0,3).map(function(n){return '"'+n.u+'": '+n.note}),
-  moment:null,skills:null,herView:'',tryNext:'Replay with the same plan, but answer what she or he actually says before asking the next thing.'};
+  moment:null,skills:localSkills(),score:null,rewrites:[],herView:'',tryNext:'Replay with the same plan, but answer what she or he actually says before asking the next thing.'};
 }
 
 /* ---------- game state ---------- */
@@ -348,7 +357,12 @@ async function doReview(){
  $('rv').innerHTML='<div class="spin"><i></i><span>Going back over the conversation...</span></div>';
  var rev=null;
  if(G.notes.length>0){
-  try{rev=await SAMPLE.json(reviewPrompt(),{modelTier:'default',cache:false})}catch(e){rev=null}
+  var why='';
+  try{rev=await SAMPLE.json(reviewPrompt(),{modelTier:'default',cache:false})}catch(e){rev=null;why=(e&&e.code||'error')+(e&&e.detail?': '+e.detail:'');console.warn('review failed',e)}
+  if(!rev||typeof rev!=='object'||!/^(success|graceful|failed)$/.test(rev.outcome)){
+   try{rev=await SAMPLE.json(reviewPrompt(),{modelTier:'quick',cache:false})}catch(e){rev=null;why=why||((e&&e.code||'error')+(e&&e.detail?': '+e.detail:''));console.warn('review retry failed',e)}
+  }
+  G.reviewWhy=why;
  }
  if(!rev||typeof rev!=='object'||!/^(success|graceful|failed)$/.test(rev.outcome)){rev=G.notes.length?localReview():{outcome:'graceful',headline:'You walked away',summary:'You left before saying anything, so there is nothing to score.',well:[],improve:['Next time, try saying hello. Even a small opener gives the conversation something to build on.'],moment:null,skills:null,herView:'',tryNext:'Walk over and say something simple about the place.'};if(!G.notes.length)rev.outcome='failed'}
  if(G.end!=='won'&&rev.outcome==='success')rev.outcome='graceful';
@@ -360,13 +374,16 @@ async function doReview(){
 function lis(a){return (a||[]).filter(function(x){return typeof x==='string'&&x}).map(function(x){return '<li>'+esc(x)+'</li>'}).join('')}
 function renderReview(r){
  var lab={success:'Success',graceful:'Handled well',failed:'Not this time'}[r.outcome];
- var h='<div class="res '+r.outcome+'"><div class="k">'+lab+'</div><h1>'+esc(r.headline||lab)+'</h1><p>'+esc(r.summary||'')+'</p></div>';
+ var h='<div class="res '+r.outcome+'"><div class="k">'+lab+(typeof r.score==='number'?' · '+Math.max(0,Math.min(100,Math.round(r.score)))+'/100':'')+'</div><h1>'+esc(r.headline||lab)+'</h1><p>'+esc(r.summary||'')+'</p></div>';
  if(r.herView)h+='<div class="box"><h3>How '+esc(G.p.name)+' saw it</h3><p>'+esc(r.herView)+'</p></div>';
  if(r.moment&&r.moment.quote)h+='<div class="box"><h3>The '+(r.moment.kind==='worst'?'turning point':'best moment')+'</h3><div class="moment"><span class="q">“'+esc(r.moment.quote)+'”</span>'+esc(r.moment.why||'')+'</div></div>';
  if(r.well&&r.well.length)h+='<div class="box"><h3>What worked</h3><ul>'+lis(r.well)+'</ul></div>';
  if(r.improve&&r.improve.length)h+='<div class="box"><h3>What to improve</h3><ul>'+lis(r.improve)+'</ul></div>';
  if(r.skills){var K={opening:'Opening',listening:'Listening',tone:'Tone and humour',signals:'Reading signals',timing:'Timing',respect:'Respect',recovery:'Recovery'};
-  h+='<div class="box"><h3>Skills this round</h3><div class="skills">'+Object.keys(K).filter(function(k){return r.skills[k]&&r.skills[k]!=='n/a'}).map(function(k){var v=String(r.skills[k]),c=v==='strong'?'strong':v==='solid'?'solid':'work';return '<div class="sk"><small>'+K[k]+'</small><b class="'+c+'">'+esc(v.charAt(0).toUpperCase()+v.slice(1))+'</b></div>'}).join('')+'</div></div>'}
+  h+='<div class="box"><h3>Skills this round</h3><div class="skills">'+Object.keys(K).filter(function(k){var v=r.skills[k];return v!=null&&v!=='n/a'}).map(function(k){
+   var v=r.skills[k],n=typeof v==='number'?Math.max(0,Math.min(10,Math.round(v))):({strong:8,solid:6,'needs work':3}[String(v)]),c=n>=7?'strong':n>=5?'solid':'work',lbl=n>=7?'Strong':n>=5?'Solid':'Needs work';
+   return '<div class="sk"><small>'+K[k]+'</small><b class="'+c+'">'+n+'/10 <span style="font-weight:500;font-size:12px;opacity:.8">'+lbl+'</span></b></div>'}).join('')+'</div></div>'}
+ if(r.rewrites&&r.rewrites.length)h+='<div class="box"><h3>What you could have said</h3>'+r.rewrites.filter(function(x){return x&&x.said&&x.better}).slice(0,3).map(function(x){return '<div class="moment"><span class="q">“'+esc(x.said)+'”</span>Try: “'+esc(x.better)+'”</div>'}).join('')+'</div>';
  if(r.tryNext)h+='<div class="box"><h3>Try this next time</h3><p>'+esc(r.tryNext)+'</p></div>';
  h+='<div class="note">Who they were: '+esc(G.p.arch.label)+', '+esc(G.p.name)+'. Replay and you will meet someone different.</div>';
  h+='<div class="btns"><button class="cta" id="again">Replay this challenge</button><button class="ghost" id="tolist">All challenges</button></div>';

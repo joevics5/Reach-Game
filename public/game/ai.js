@@ -28,13 +28,13 @@
   function pickJson(text) {
     var t = String(text || '').replace(/```json|```/g, '');
     var a = t.indexOf('{'), b = t.lastIndexOf('}');
-    if (a < 0 || b <= a) throw { code: 'invalid_json' };
-    try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { throw { code: 'invalid_json' }; }
+    if (a < 0 || b <= a) throw { code: 'invalid_json', detail: 'no JSON in the reply' };
+    try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { throw { code: 'invalid_json', detail: 'the reply was cut off or malformed' }; }
   }
 
   async function gemini(turns, model, review, key) {
     var g = toGemini(turns);
-    var body = { contents: g.contents, generationConfig: { responseMimeType: 'application/json', maxOutputTokens: review ? 4096 : 2048 } };
+    var body = { contents: g.contents, generationConfig: { responseMimeType: 'application/json', maxOutputTokens: review ? 8192 : 2048 } };
     if (g.sys) body.systemInstruction = { parts: [{ text: g.sys }] };
     var res;
     try {
@@ -50,7 +50,7 @@
     var data = await res.json();
     var c = data.candidates && data.candidates[0];
     var text = c && c.content && c.content.parts ? c.content.parts.map(function (p) { return p.text || ''; }).join('') : '';
-    if (!text) throw { code: 'empty', detail: c && c.finishReason };
+    if (!text) throw { code: 'empty', detail: (c && c.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) };
     return pickJson(text);
   }
 
