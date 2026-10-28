@@ -242,6 +242,7 @@ function openBrief(id){
  '<div class="box"><h3>Your goal</h3><p>'+esc(x.goal)+' You get there by talking. Nobody will tell you what to say.</p></div>'+
  '<div class="box"><h3>You are</h3><div class="seg" id="sg-me"><button data-v="man">A man</button><button data-v="woman">A woman</button></div><h3 style="margin-top:12px">You are approaching</h3><div class="seg" id="sg-t"><button data-v="woman">A woman</button><button data-v="man">A man</button></div><p class="note" style="margin-top:8px">Their personality, reactions and way of talking change with who you pick. Each attempt is a different person in a different mood.</p></div>'+
  '<div class="box"><div class="tog"><button class="sw" id="sw" role="switch" aria-checked="false" aria-labelledby="swl"></button><div><b id="swl">Guide Mode</b><p class="note">A coach gives hints about timing and tone, and a mood ring shows how they feel. It does not write your lines.<br><b class="warn">Locked once you start. You cannot switch it mid-conversation.</b></p></div></div></div>'+
+ '<div class="box"><h3>A name for tonight <span class="note">(optional)</span></h3><p class="note">Give one of the people in the bar a name of your choice. It is only a name: the person is fictional, and the game picks who gets it. It is not saved.</p><input class="fld" id="nm" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Leave blank to be surprised"></div>'+
  '<label class="chk"><input type="checkbox" id="adult"> <span>I am 18 or older. Conversations are PG-13 and the characters are adults.</span></label>'+
  (hasAI?'<p class="note">Conversations are written by '+esc(window.ReachAI.label())+'. '+(window.ReachAI.active()?'':'Add a Gemini key in Settings for real conversations. ')+'</p>':'<p class="note warn">The AI conversation is not available, so this challenge cannot start.</p>')+
  '<button class="cta" id="go"'+(hasAI?'':' disabled')+'>Walk in</button>';
@@ -254,8 +255,21 @@ function openBrief(id){
 }
 
 /* ---------- play ---------- */
+function cleanName(v){
+ v=String(v||'').normalize('NFKC').replace(/[^\p{L}\p{M}'\- ]/gu,'').replace(/\s+/g,' ').trim();
+ var w=v.split(' ').slice(0,2).join(' ').slice(0,20).trim();
+ return w.replace(/(^|[ \-'])(\p{L})/gu,function(m,a,b){return a+b.toUpperCase()});
+}
 function startChallenge(){
- G.cast=makeCast(G.target);var p=G.cast[0];
+ G.cast=makeCast(G.target);
+ // optional player-chosen name: replaces the name of one randomly picked person for this challenge only
+ var nmEl=$('nm'),custom=cleanName(nmEl&&nmEl.value);if(nmEl)nmEl.value='';
+ if(custom){
+  var pick=G.cast[Math.floor(Math.random()*G.cast.length)],old=pick.name;
+  G.cast.forEach(function(o){if(o!==pick&&o.name.toLowerCase()===custom.toLowerCase())o.name=old}); // avoid two people with the same name
+  pick.name=custom;
+ }
+ var p=G.cast[0];
  G.p=p;G.hist=[];G.notes=[];G.turn=0;G.status='explore';G.end=null;G.busy=false;G.cur={interest:p.interest,comfort:p.comfort,patience:p.patience};G.approach='';G.rules='';
  $('log').innerHTML='';$('hint').hidden=true;$('err').hidden=true;$('timebox').hidden=true;$('timebar').style.width='100%';
  $('chname').textContent='The Copper Lantern';$('chsub').textContent='Evening. Soft music. Plenty of people.';
