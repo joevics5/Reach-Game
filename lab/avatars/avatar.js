@@ -111,8 +111,8 @@ function buildChar(){
   const head=mk(HR,headGeo(),MAT.skin,0,0,0,OL);
   [-1,1].forEach(s=>{const e=mk(HR,new T.SphereGeometry(1,16,12),MAT.skin,s*(HS.sx*jawW(0)-.001),.2,-.004);e.scale.set(.010*CFG.earK,.026*CFG.earK,.017*CFG.earK);e.rotation.y=s*.25});
   // nose
-  const nz=surfZ(0,.17)+(CFG.noseLen||0);
-  const nose=new Sweep(8,8);nose.set([new T.Vector3(0,.214,surfZ(0,.214)-.003),new T.Vector3(0,.19,surfZ(0,.19)+.002),new T.Vector3(0,.166,nz+.011)],u=>(.0050+.0026*u)*CFG.noseK,u=>(.0064+.0040*u)*CFG.noseK);mk(HR,nose.g,MAT.skin);
+  const nz=surfZ(0,.17)+(CFG.noseLen||0)*.5-.004;
+  const nose=new Sweep(8,8);nose.set([new T.Vector3(0,.214,surfZ(0,.214)-.003),new T.Vector3(0,.19,surfZ(0,.19)+.002),new T.Vector3(0,.166,nz+.0105)],u=>(.0050+.0026*u)*CFG.noseK,u=>(.0064+.0040*u)*CFG.noseK);mk(HR,nose.g,MAT.skin);
   mk(HR,new T.SphereGeometry(.0115*CFG.noseK,14,10),MAT.skin,0,.160+(CFG.noseUp||0),nz+.009).scale.set(1+(CFG.noseW||0)*.5,.86,1.0);
   [-1,1].forEach(s=>{const w=mk(HR,new T.SphereGeometry(.0068*CFG.noseK*(1+(CFG.noseW||0)*.4),12,8),MAT.skin,s*(.0098*CFG.noseK+(CFG.noseW||0)*.014),.156+(CFG.noseUp||0),nz+.003);w.scale.set(1,.9,.9)});
   // eyes
