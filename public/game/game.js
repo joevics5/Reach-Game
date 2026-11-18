@@ -114,7 +114,8 @@ var SLOTS=[
 function makeCast(target){
  var archs=shuffle(ARCH.slice()).slice(0,5),names=shuffle(NAMES[target].slice()),tops=shuffle(TOPC.slice()),skins=shuffle(SKIN.slice()),
   styles=shuffle(target==='woman'?['long','bun','curly','afro','ponytail','short']:['short','buzz','curly','afro','short']),slots=shuffle(SLOTS.slice());
- return archs.map(function(a,i){var p=makePersona(target,a);p.name=names[i];p.look.sh=tops[i];p.look.sk=skins[i%skins.length];p.look.style=styles[i%styles.length];p.slot=slots[i];return p});
+ var deal=window.ReachCast?ReachCast.deal(target==='woman'?'f':'m',5):null;
+ return archs.map(function(a,i){var p=makePersona(target,a);p.name=names[i];if(deal){p.look=deal[i]}else{p.look.sh=tops[i];p.look.sk=skins[i%skins.length];p.look.style=styles[i%styles.length]}p.slot=slots[i];return p});
 }
 
 /* ---------- AI ---------- */
@@ -589,7 +590,7 @@ function pose(c,st,dt,dist,t){
  c.phone.visible=phone;c.glass.visible=glass;
  if(c.sync)c.sync();
 }
-function randLook(woman){return {sk:pk(SKIN),sh:pk(TOPC),pn:pk(BOTC),hair:pk(HAIRC),style:woman?pk(['long','bun','curly','afro','ponytail','short']):pk(['short','buzz','curly','afro','short']),beard:!woman&&Math.random()<.35,glasses:Math.random()<.2,woman:woman,dress:woman&&Math.random()<.3}}
+function randLook(woman){if(window.ReachCast&&!window.__OLDCHARS)return ReachCast.crowd(woman);return {sk:pk(SKIN),sh:pk(TOPC),pn:pk(BOTC),hair:pk(HAIRC),style:woman?pk(['long','bun','curly','afro','ponytail','short']):pk(['short','buzz','curly','afro','short']),beard:!woman&&Math.random()<.35,glasses:Math.random()<.2,woman:woman,dress:woman&&Math.random()<.3}}
 
 /* room */
 var RX=12.6,RZ=9.4;
@@ -657,7 +658,7 @@ function setupPlay(){
  W.npcs=[];W.exit=null;W.tgt=null;W.auto=null;W.orb=0;W.cyaw=Math.PI;
  var p=G.p;
  // player
- var meLook=randLook(G.me==='woman');meLook.sh=0xF7B500;meLook.pn=0x1b3a5c;meLook.dress=false;meLook.style=G.me==='woman'?'long':'short';meLook.beard=false;meLook.glasses=false;
+ var meLook=randLook(G.me==='woman');meLook.sh=0xF7B500;meLook.pn=0x1b3a5c;meLook.dress=false;meLook.top='tee';meLook.bottom='jeans';meLook.face=meLook.face;meLook.style=G.me==='woman'?'long':'short';meLook.beard=false;meLook.glasses=false;
  meLook.lod='hi';W.me=makeChar(meLook);W.me.g.position.set(0,0,6.4);W.me.g.rotation.y=Math.PI;W.dyn.add(W.me.g);W.mePos=V(0,0,6.4);W.meH=Math.PI;
  var nm=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(256,64,function(x,w,h){x.fillStyle='rgba(255,180,84,.95)';x.beginPath();x.moveTo(24,2);x.arcTo(w-2,2,w-2,h-2,20);x.arcTo(w-2,h-2,2,h-2,20);x.arcTo(2,h-2,2,2,20);x.arcTo(2,2,w-2,2,20);x.fill();x.fillStyle='#2a1700';x.font='700 32px Figtree,Arial';x.textAlign='center';x.textBaseline='middle';x.fillText('You',w/2,h/2+2)}),transparent:true,depthTest:false}));
  nm.scale.set(1.2,.3,1);nm.position.set(0,2.3,0);nm.renderOrder=20;W.me.g.add(nm);
