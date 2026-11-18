@@ -22,7 +22,7 @@ function mk(parent,geo,mat,x=0,y=0,z=0,ol=0){const m=new T.Mesh(geo,mat);m.posit
 
 /* ---------- loft: smooth shape from cross-sections ---------- */
 const cr=(a,b,c,d,t)=>{const t2=t*t,t3=t2*t;return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3)};
-const GSCALE=1.1;
+const GSCALE=1.28;
 let LQ=.55;
 function loft(L,seg=32,dense=4,capBottom=true,capTop=true){
   seg=Math.max(10,Math.round(seg*LQ));dense=Math.max(2,Math.round(dense*LQ+.3));
@@ -112,12 +112,12 @@ function buildChar(){
   [-1,1].forEach(s=>{const e=mk(HR,new T.SphereGeometry(1,16,12),MAT.skin,s*(HS.sx*jawW(0)-.001),.2,-.004);e.scale.set(.010*CFG.earK,.026*CFG.earK,.017*CFG.earK);e.rotation.y=s*.25});
   // nose
   const nz=surfZ(0,.17)+(CFG.noseLen||0);
-  const nose=new Sweep(8,8);nose.set([new T.Vector3(0,.214,surfZ(0,.214)-.003),new T.Vector3(0,.19,surfZ(0,.19)+.002),new T.Vector3(0,.166,nz+.011)],u=>(.0042+.002*u)*CFG.noseK,u=>(.0046+.0028*u)*CFG.noseK);mk(HR,nose.g,MAT.skin);
-  mk(HR,new T.SphereGeometry(.0095*CFG.noseK,14,10),MAT.skin,0,.160+(CFG.noseUp||0),nz+.010).scale.set(1+(CFG.noseW||0)*.5,.86,.95);
+  const nose=new Sweep(8,8);nose.set([new T.Vector3(0,.214,surfZ(0,.214)-.003),new T.Vector3(0,.19,surfZ(0,.19)+.002),new T.Vector3(0,.166,nz+.011)],u=>(.0050+.0026*u)*CFG.noseK,u=>(.0064+.0040*u)*CFG.noseK);mk(HR,nose.g,MAT.skin);
+  mk(HR,new T.SphereGeometry(.0115*CFG.noseK,14,10),MAT.skin,0,.160+(CFG.noseUp||0),nz+.009).scale.set(1+(CFG.noseW||0)*.5,.86,1.0);
   [-1,1].forEach(s=>{const w=mk(HR,new T.SphereGeometry(.0068*CFG.noseK*(1+(CFG.noseW||0)*.4),12,8),MAT.skin,s*(.0098*CFG.noseK+(CFG.noseW||0)*.014),.156+(CFG.noseUp||0),nz+.003);w.scale.set(1,.9,.9)});
   // eyes
   const eyes=[];
-  [-1,1].forEach(s=>{const e=new T.Group(),ex=s*.044*(CFG.eyeX||1),ey=.212+(CFG.eyeY||0);e.position.set(ex,ey,surfZ(ex,ey)-.0105);e.rotation.z=-s*(CFG.tilt||0);e.scale.set(CFG.eyeW||1,CFG.eyeH||1,1);HR.add(e);
+  [-1,1].forEach(s=>{const e=new T.Group(),ex=s*.044*(CFG.eyeX||1),ey=.212+(CFG.eyeY||0);e.position.set(ex,ey,surfZ(ex,ey)-.0095);e.rotation.z=-s*(CFG.tilt||0);e.scale.set(CFG.eyeW||1,CFG.eyeH||1,.72);HR.add(e);
     const r=.0185*CFG.eyeK;mk(e,new T.SphereGeometry(r,20,14),MAT.white);
     const iris=toon(CFG.iris||0x5b3a24);const ir=mk(e,new T.SphereGeometry(r*1.006,20,10,0,Math.PI*2,0,.62),iris);ir.rotation.x=Math.PI/2;
     const pu=mk(e,new T.SphereGeometry(r*1.012,16,8,0,Math.PI*2,0,.26),MAT.dark);pu.rotation.x=Math.PI/2;
@@ -139,9 +139,9 @@ function buildChar(){
     mk(k,limbK(CFG.armK,.28,[[0,.034],[.25,.033],[.7,.026],[1,.021]]),MAT.skin,0,0,0,OL);
     // hand: palm, four fingers, thumb
     const h=new T.Group();h.position.set(0,-.29,0);h.scale.setScalar(CFG.handK);k.add(h);
-    mk(h,loft([{y:.0,rx:.019,rz:.010},{y:-.04,rx:.029,rz:.0125},{y:-.075,rx:.030,rz:.012}],14,3),MAT.skin,0,0,0,0);
-    [-.0225,-.0075,.0075,.0225].forEach((fx,i)=>{const len=[.055,.065,.06,.045][i];const f=mk(h,limb(len,[[0,.0078],[.6,.0068],[1,.005]],8),MAT.skin,fx,-.07,0);f.rotation.x=.25})
-    const th=mk(h,limb(.045,[[0,.0095],[1,.0058]],8),MAT.skin,-s*.03,-.03,.004);th.rotation.z=s*.9;th.rotation.x=-.2;
+    mk(h,loft([{y:.004,rx:.020,rz:.015},{y:-.035,rx:.030,rz:.0205},{y:-.075,rx:.030,rz:.0185}],14,3),MAT.skin,0,0,0,0);
+    [-.0225,-.0075,.0075,.0225].forEach((fx,i)=>{const len=[.055,.065,.06,.045][i];const f=mk(h,limb(len*.92,[[0,.0095],[.6,.0085],[1,.0062]],8),MAT.skin,fx,-.07,.002);f.rotation.x=.5})
+    const th=mk(h,limb(.045,[[0,.0115],[1,.0072]],8),MAT.skin,-s*.03,-.03,.008);th.rotation.z=s*.9;th.rotation.x=-.2;
     return {p,k,h}};
   const leg=s=>{const p=new T.Group();p.position.set(s*CFG.legX,0,0);P.add(p);
     mk(p,limbK(CFG.legK,.43,[[0,.07],[.14,.082],[.6,.065],[1,.049]]),MAT.skin,0,0,0,OL);
