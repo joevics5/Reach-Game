@@ -22,6 +22,16 @@ var BAR_AI={
  how:{won:'she or he agreed to a next step',declined:'the character declined or the chat wound down calmly',left:'the character disengaged and left',timeout:'the conversation ran out of time',player_left:'the player walked away'}
 };
 
+var BUS_AI={
+ intro:'A human player is chatting to you at a bus stop late at night.',
+ scene:function(p){return 'SCENE: A bus stop, about 10:40pm on a weeknight. The streets are quiet. You are '+p.circ+'. Your last bus is due in a few minutes and you do not know the player. You are open to a friendly chat but you decide honestly. Your mood: '+p.mood+'.'},
+ style:'Talk like a real person waiting for a bus at night',
+ win:'"end" must be null while the conversation continues. Set "won" only when your interest is at least 70 and comfort at least 60, and the player has naturally proposed a concrete plan with BOTH a day and a time (for example Saturday at 3), and you would honestly say yes. Say yes in your own way and confirm the day and time in "cue". Do not agree in the first 3 exchanges unless truly earned. A vague "we should hang out" is not enough: stay warm and ask when. Never write digits that look like a phone number. Set "declined" when you kindly turn down the plan or the chat winds down with no plan. Set "left" when you move away or board early because of discomfort or pushiness. When your bus arrives (around the final turn) the chat must end.',
+ wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Your bus is due around turn '+(T-1)+'. At turn '+T+' your bus arrives and you must end the conversation.'},
+ review:'a conversation at a bus stop late at night',
+ how:{won:'she or he agreed to a day and a time before the bus came',declined:'the character did not agree a plan before the bus came',left:'the character moved away or left',timeout:'the bus came before a plan was made',player_left:'the player walked away'}
+};
+
 var DATE_AI={
  intro:'The player is on a first date with you.',
  scene:function(p){return 'SCENE: Rosa\'s, a small candlelit restaurant, about 8pm on a Saturday. You and the player are sitting at a table for two. You are '+p.circ+'. You agreed to this date, so you are open to a good evening but you decide honestly how it goes. Your mood: '+p.mood+'.'},
@@ -63,8 +73,27 @@ var D={
     pre:'You have just sat down. {Name} is across the table. Say hello and see where the evening goes. There is no hurry: the meal will carry the night.',
     circs:['arrived a few minutes early and ordered water','is glad to be out after a long week','is a little nervous but hiding it well','came straight from work and is still unwinding'],
     hint:'Ask about their life and answer what they ask. A date is a back and forth, not an interview.',openCue:function(p){return p.name+' looks up with a small smile as you sit down.'},timeoutCue:function(p){return 'The bill arrives and the evening comes to an end.'},cast:{n:1},go:'Take your seat',placeholder:'Say something to {her}',leave:'Leave the table'}),
-  C('The Last Bus','Bus stop',2,'Have an enjoyable chat and agree a date and a time before her bus arrives.'),
-  C('Table for More','Restaurant',3,'Approach a group of three women and get them to welcome you to their table.'),
+  C('The Last Bus','Bus stop',2,'Have an enjoyable chat and agree a date and a time before her bus arrives.',{scene:'busstop',mode:'seated',picker:{me:true,target:true},custom:true,maxT:10,ai:BUS_AI,
+    situation:'It is a quiet weeknight about 10:40pm at a bus stop. You are waiting for the same last bus as a stranger. You only have a few minutes. The goal: have a good chat and agree a day and a time to meet again before the bus comes.',
+    chat:{name:'Bus stop',sub:'Late. A quiet street.',who:'At the bus stop'},
+    pre:'You are waiting for the last bus. {Name} is standing a few steps away, and the bus is a few minutes out. Say something.',
+    circs:['checking the bus times on a phone','tired after a long shift and glad the day is over','heading home after a night out with friends','waiting with headphones around the neck'],
+    hint:'You only have a few minutes: be warm, be curious, and when it is going well, suggest a specific day and time.',openCue:function(p){return p.name+' glances up the road, then at you.'},timeoutCue:function(p){return 'The headlights of the last bus sweep round the corner.'},cast:{n:1},go:'Walk to the stop',placeholder:'Say something to {her}',leave:'Walk away'}),
+  C('Table for More','Brunch cafe',3,'Approach a group of three women and get them to welcome you to their table.',{scene:'cafe',mode:'seated',picker:{me:true,target:false},maxT:10,skills:[['opening','Opening'],['confidence','Confidence'],['humor','Humour'],['respect','Reading the group'],['listening','Listening'],['charm','Charm'],['invitation','Getting the invite']],ai:work({
+    who:'Jade, one of three friends having brunch together. You speak for the table: usually as Jade, but your two friends Priya and Mel chip in with a line, and you name who is speaking',
+    scene:'SCENE: A sunny brunch cafe, Saturday late morning. Three friends (Jade, Priya and Mel) are at a round table, catching up. A stranger walks up to your table. You are not looking for company, you are friendly but protective of your time together, and a group is harder to win than one person.',
+    feel:'interest is how much the group is warming to the player (0-100). comfort is how comfortable the group is with them. patience is how much patience the group has before they politely close the chat.',
+    win:'Set "won" only when the group actually invites the player to sit (for example Priya pulls out the spare chair) because they genuinely enjoyed him or her (interest at least 70 and comfort at least 65). All three need to be at least okay with it: if one friend is cold, say so. A group is won by respecting all three of them, being funny without being pushy, and not only focusing on one. Do not invite in the first 3 exchanges. Set "declined" when you politely say you are catching up and wish them well. Set "left" if the player is rude or pushy and the table asks them to leave.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. The group decides about turn '+(T-1)+'. At turn '+T+' you must end it.'},
+    review:'approaching a group of three at a cafe',how:{won:'the women welcomed the player to their table',declined:'the women politely kept the table to themselves',left:'the women asked the player to leave',timeout:'the time ran out',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about the group: Jade is friendly but guarded, Priya is the funny one who decides the mood, and Mel is quiet and judges sincerity. They like someone who talks to all three of them, is playful and respects that it is their time. They dislike overconfidence and pick-up lines. The player needed an invitation to join the table."}}),
+    persona:{name:'Jade',gender:'woman',age:27,job:'designer',label:'The friendly, protective group',interest:35,comfort:40,patience:55,mood:'chatty with friends',look:{top:'tee',bottom:'jeans',sh:0xe86a8a,pn:0x2a3a5a,style:'curly',glasses:false}},
+    situation:'You are at a brunch cafe. Three women are catching up at a round table with one spare chair. You walk over to their table and try to get them to welcome you to sit down.',
+    chat:{name:'Brunch Cafe',sub:'Saturday. A table of three.',who:'The table'},
+    pre:'You walk up to the round table. Jade, Priya and Mel stop talking and look up. There is a spare chair. Say something.',
+    hint:'Talk to all three, be playful, and respect that it is their time. Let them offer the chair.',
+    openCue:function(p){return 'The three friends look up from their coffees.'},timeoutCue:function(p){return 'The waiter arrives with their food and the group turns back to each other.'},
+    cast:{n:1},go:'Walk over',placeholder:'Say something to the table',leave:'Walk away'}),
   C('Coffee by Text','Group chat',2,'Pick someone from the group chat, build rapport by message and get her to agree to coffee.')
  ],
  friends:[

@@ -54,3 +54,7 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - Shark Tank mirrors the debate pattern: one persona object, the AI voices the five investors by name.
 - Camera tip: `cam(cx,cz,r,py,ty,a0)` orbits the midpoint; use a0 around 0.5-1.0 so the player does not block the other person.
 - Untested with a real Gemini key.
+
+## Rizz additions
+- The Last Bus (scene `busstop`, uses `BUS_AI`, same target-picker flow as The Date; win needs a day AND a time) and Table for More (scene `cafe`, fixed persona Jade voicing three friends, `work()` ai with its own skills). Rizz now has 4 playable; Coffee by Text still needs a chat-only UI (no 3D scene).
+- Untested with a real Gemini key.
