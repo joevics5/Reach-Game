@@ -37,9 +37,12 @@ var WORK_SK=[['opening','Opening'],['listening','Listening'],['clarity','Clarity
 function work(o){
  return {intro:'The player is in a work conversation with you.',scene:function(){return o.scene},style:'Talk like a real professional in this situation',win:o.win,wrap:o.wrap,review:o.review,how:o.how,hidden:o.hidden,feel:o.feel,
   who:function(p,me){return 'WHO YOU ARE: '+o.who+'. '+p.arch.label+'. Stay in this role throughout. The player is a '+me+'. You are a '+p.gender+' and you react as that person naturally would.'},
-  extra:'This is a professional conversation. Speak like this person would at work: plain, specific, no flirting.'};
+  extra:o.extra||'This is a professional conversation. Speak like this person would at work: plain, specific, no flirting.'};
 }
 
+var SPEAK_SK=[['opening','Opening'],['delivery','Delivery'],['clarity','Clarity'],['connection','Connection'],['humor','Humour & warmth'],['composure','Composure'],['closing','Closing']];
+var SPEAK_X='The player is giving a spoken performance and you are the person who reacts to it. Each player message is what they SAY out loud, in the moment. Reply as that person would in the room: short, human, react to what was actually said (a laugh, a nod, a hard question). Do not narrate for the whole room and do not coach.';
+function spk(o){var a=work(o);a.intro='The player is speaking to a room and you are one person reacting to them.';a.extra=SPEAK_X;return a}
 var D={
  toasting:[
   C('Break the Ice at the Bar','Neighbourhood bar',1,'Start a conversation and leave with a way to see them again, if the interest is real.',{scene:'bar',mode:'approach',picker:{me:true,target:true},custom:true,maxT:14,ai:BAR_AI,
@@ -73,11 +76,81 @@ var D={
   C('The Business Loan','Bank',3,'Present your business plan to the bank manager and secure the loan.')
  ],
  speaking:[
-  C('Best Man Toast','Wedding reception',2,'Give a toast that is warm, funny and respectful.'),
-  C('Graduation Speech','Graduation hall',2,'Give a speech that moves a hall of graduates and their families.'),
-  C('1 vs 5 Debate','Debate room',3,'Debate five opponents one at a time and win at least three of the five.'),
-  C('The Difficult Question','Q&A hall',3,'Take questions from an audience that challenges your opinions.'),
-  C('The Press Conference','Press room',3,'Face journalists after a controversial incident without losing your composure.')
+  C('Best Man Toast','Wedding reception',2,'Give a toast that is warm, funny and respectful.',{scene:'wedding',mode:'seated',picker:{me:true,target:false},maxT:8,skills:SPEAK_SK,ai:spk({
+    who:"Margaret, the groom's grandmother, sitting at the front table of the wedding reception",
+    scene:"SCENE: A wedding reception, Saturday evening. The player is the best man and is about to give the toast. You are the groom's grandmother at the front table, and you speak for the room: you laugh, you wince, you whisper, you call out. Keep each reply to one or two lines of what you do or say.",
+    feel:'interest is how well the room is warming to the player (0-100). comfort is how safe and respectful the speech feels. patience is how much goodwill the room has left.',
+    win:'The player speaks one chunk of the toast per turn. Turn 1 is the opening. React honestly: jokes that land get laughter, mean or embarrassing jokes about the couple or their families get silence and a wince, rambling loses the room. A good toast has a warm opening, a short funny story, something sincere about the couple, and a clean close with a raised glass. At the final turn the toast ends and you decide honestly: set "won" only if the room loved it (interest 70 or more and comfort 65 or more); otherwise "declined". Set "left" only if the player says something so offensive the groom stops the speech.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Plan about the toast in beats: welcome, who you are, a story, the couple, the raise of glasses. At turn '+T+' you must end it.'},
+    review:'a best man toast at a wedding',how:{won:'the room loved the toast',declined:'the toast was flat or awkward',left:'the speech was stopped',timeout:'the toast ran out of time',player_left:'the player walked off'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Margaret loves a gentle joke at the groom's expense, hates anything about exes or drinking, and is moved by sincerity. She is a warm, sharp-eyed 78-year-old. The player needed the room to enjoy the toast and feel respected."}}),
+    persona:{name:'Margaret',gender:'woman',age:78,job:'groom\'s grandmother',label:'The warm, sharp-eyed grandmother',interest:55,comfort:60,patience:75,mood:'smiling and expectant',look:{top:'dress',bottom:'aline',sh:0x7a4a8a,pn:0x4a2a5a,style:'bun',glasses:true}},
+    situation:'You are the best man at a wedding reception. Glass in hand, you stand at the microphone in front of the guests and the couple. You want to give a toast that is warm, funny and respectful.',
+    chat:{name:'The Reception',sub:'Saturday evening. Glasses are being raised.',who:'The room'},
+    pre:'The room goes quiet. You tap the glass, the microphone squeals and every face turns to you. Margaret, at the front table, smiles encouragingly. Begin your toast.',
+    hint:'Open with who you are and something personal. Land one story and then say something sincere.',
+    openCue:function(p){return 'Margaret lifts her glass a few inches and nods for you to begin.'},timeoutCue:function(p){return 'The DJ catches your eye: time to wrap up and raise the glasses.'},
+    cast:{n:1},go:'Step up to the mic',placeholder:'Say your toast',leave:'Sit down early'}),
+  C('Graduation Speech','Graduation hall',2,'Give a speech that moves a hall of graduates and their families.',{scene:'graduation',mode:'seated',picker:{me:true,target:false},maxT:8,skills:SPEAK_SK,ai:spk({
+    who:'Professor Hale, the dean of the college, seated on stage during the graduation ceremony',
+    scene:'SCENE: Graduation day. The player is the student speaker, standing at the podium before the graduates and their families. You are Professor Hale, the dean, seated on stage beside the podium. You react quietly: a nod, a smile, a frown, a glance at the clock.',
+    feel:'interest is how much the hall is moved (0-100). comfort is how well the speech fits the occasion. patience is how much time the ceremony has left.',
+    win:'The player delivers one part of the speech per turn. A good graduation speech has a strong opening line, one memorable story, a theme the graduates share, thanks, and a forward-looking close. React honestly: clichés and long lists of thank-yous lose the hall, a vivid specific story wins it. At the final turn the speech ends and you decide honestly: set "won" only if the hall was genuinely moved (interest 70 or more and comfort 65 or more); otherwise "declined". Set "left" only if the player abandons the speech.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Plan the speech in parts: opening line, a story, the shared theme, thanks, the future. At turn '+T+' you must end it.'},
+    review:'a graduation speech',how:{won:'the hall was moved',declined:'the speech was forgettable',left:'the speech was abandoned',timeout:'the speech ran out of time',player_left:'the player left the stage'},
+    hidden:function(p){return 'Hidden facts about '+p.name+': Professor Hale has heard hundreds of graduation speeches. He is bored by clichés ("the future is bright") and moved by specific, honest stories and humility. The player needed to move the hall.'}}),
+    persona:{name:'Professor Hale',gender:'man',age:62,job:'dean of the college',label:'The veteran dean',interest:45,comfort:55,patience:70,mood:'dignified and patient',look:{top:'suit',bottom:'trousers',sh:0x1B1B1B,pn:0x1B1B1B,style:'bald',glasses:true,beard:true}},
+    situation:'You have been chosen to give the student speech at your graduation. You are at the podium in front of the graduates and their families, and the dean is seated just beside you.',
+    chat:{name:'Graduation Hall',sub:'Gowns, flags and a full hall.',who:'The dean'},
+    pre:'You walk up to the podium. A hall full of gowns and proud faces waits. Professor Hale nods at you. Begin your speech.',
+    hint:'Start with something specific and personal, not a cliché. One real story beats five general claims.',
+    openCue:function(p){return 'Professor Hale folds his hands and gives you a small nod.'},timeoutCue:function(p){return 'The dean looks at the programme: the ceremony must move on.'},
+    cast:{n:1},go:'Walk to the podium',placeholder:'Give your speech',leave:'Step away'}),
+  C('1 vs 5 Debate','Debate room',3,'Debate five opponents one at a time and win at least three of the five.',{scene:'debate',mode:'seated',picker:{me:true,target:false},maxT:15,skills:SPEAK_SK,ai:spk({
+    who:'a series of five different debaters, one at a time, each taking the opposite side from the player in a formal debate. A moderator introduces each new opponent',
+    scene:'SCENE: A formal debate room. The motion is "This house would ban homework in schools". The player is on the side FOR the ban and will face five opponents one after another, about three exchanges each. At the start of each round, introduce the new opponent by name in one short line (Opponent 1 of 5: Daniel, then Priya, then Marcus, then Elena, then Jordan) and have them argue against the player. Keep your usual character, but speak as the current opponent. Name the current opponent in every reply.',
+    feel:"interest is how persuasive the player is currently being (0-100). comfort is how fair and respectful the debate is. patience is how many rounds remain in the player's favour; it falls when rounds are lost.",
+    win:'Run five rounds of three exchanges each (15 turns). In every round the opponent makes a strong, specific point, then rebuts. Keep a running tally: at the end of each round say in one short line whether the player won or lost that round, judged by evidence, logic and answering the actual argument (not volume). Do not give wins away: shallow answers or dodging the question lose the round. At turn 15 total the debate ends. Set "won" only if the player won at least 3 of the 5 rounds; otherwise "declined". Set "left" only if the player storms out.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Five rounds, about three exchanges each, with a new opponent every three turns. At turn '+T+' you must end it.'},
+    review:'a formal debate against five opponents',how:{won:'the player won at least three of five rounds',declined:'the player won fewer than three rounds',left:'the player walked out',timeout:'the debate ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": the opponents are well prepared. The judges reward evidence, direct answers to the opponent's argument and calm delivery, and penalise dodging, insults and repeating the same point. The player needed to win at least three of five rounds."}}),
+    persona:{name:'Daniel',gender:'man',age:30,job:'competitive debater',label:'The five opponents',interest:50,comfort:55,patience:70,mood:'focused',look:{top:'polo',bottom:'trousers',sh:0x3a5a8a,pn:0x1B1B1B,style:'short',glasses:false}},
+    situation:'You are in a formal debate arena. The motion is that homework should be banned in schools. You argue FOR it. Five opponents will take their turns to face you, and you need to win at least three of the five rounds.',
+    chat:{name:'Debate Room',sub:'Motion: This house would ban homework.',who:'Opponent'},
+    pre:'The moderator calls the debate to order. Opponent 1 of 5 steps to the lectern across from yours. You are for the ban. Open your case.',
+    hint:'Answer the actual argument they just made, then add one piece of evidence. Stay calm.',
+    openCue:function(p){return 'The moderator nods: the first opponent takes the lectern.'},timeoutCue:function(p){return 'The moderator calls time on the final round.'},
+    cast:{n:1},go:'Take your lectern',placeholder:'Make your argument',leave:'Leave the debate'}),
+  C('The Difficult Question','Q&A hall',3,'Take questions from an audience that challenges your opinions.',{scene:'qa',mode:'seated',picker:{me:true,target:false},maxT:10,skills:SPEAK_SK,ai:spk({
+    who:'Ms Okafor, an audience member at a public talk who asks tough questions at the microphone',
+    scene:"SCENE: A public Q&A after the player's talk on a controversial topic. You are a sceptical audience member at the aisle microphone. Each turn, you either ask a sharp follow-up or react to the answer. Other audience members sometimes murmur. Occasionally hand the mic to someone else with a new tough question, but keep speaking in the same voice.",
+    feel:'interest is how credible the player is coming across (0-100). comfort is how fairly and openly the player handles the challenge. patience is how much the audience has left.',
+    win:'Ask a sequence of hard but fair questions: a factual challenge, a values challenge, a gotcha, a personal one, and a closing one. Reward direct answers, admitting what the player does not know, and staying calm. Punish evasion, defensiveness, attacking the questioner and made-up facts. At the final turn the host ends the session and you decide honestly: set "won" only if the player came across as credible and composed (interest 70 or more and comfort 65 or more); otherwise "declined". Set "left" only if the player storms off.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Roughly two questions per topic: facts, values, a gotcha, a personal one, then the close. At turn '+T+' you must end it.'},
+    review:'a hostile Q&A session after a talk',how:{won:'the player handled the questions credibly',declined:'the player came across as evasive or rattled',left:'the player walked off',timeout:'the session ran out of time',player_left:'the player walked off'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Ms Okafor is a sceptical, fair-minded teacher who will respect a straight answer, even a hard one. She dislikes spin, dodging and attacks on the questioner. The player needed to stay credible and calm."}}),
+    persona:{name:'Ms Okafor',gender:'woman',age:46,job:'teacher in the audience',label:'The sceptical questioner',interest:35,comfort:40,patience:60,mood:'polite but unconvinced',look:{top:'blouse',bottom:'trousers',sh:0x2a6a5a,pn:0x1B1B1B,style:'curly',glasses:true}},
+    situation:'You have just given a talk on a topic people disagree about. Now the host opens the floor to questions from the audience.',
+    chat:{name:'Q&A Hall',sub:'The lights come up on the audience.',who:'Questioner'},
+    pre:'The host opens the floor. A woman steps to the aisle microphone with a notebook. Answer what she asks.',
+    hint:'Answer the question that was asked. It is fine to say what you do not know.',
+    openCue:function(p){return 'Ms Okafor taps the microphone and consults her notes.'},timeoutCue:function(p){return 'The host calls time: one last question.'},
+    cast:{n:1},go:'Open the floor',placeholder:'Answer the question',leave:'End the session'}),
+  C('The Press Conference','Press room',3,'Face journalists after a controversial incident without losing your composure.',{scene:'press',mode:'seated',picker:{me:true,target:false},maxT:10,skills:SPEAK_SK,ai:spk({
+    who:'Elena Marsh, a senior journalist asking questions at a press conference',
+    scene:'SCENE: A press briefing room. The player is the company spokesperson, and their company has had a controversial incident (a product recall after complaints). You are Elena Marsh, a senior journalist at the front. Other reporters shout over you. Each turn, you ask a pointed question or follow up on what the player just said.',
+    feel:"interest is how much the press trusts the player's account (0-100). comfort is how composed and honest the player seems. patience is how much patience the press has.",
+    win:'Ask pointed questions: what happened, who is responsible, did you know earlier, what will you do for affected customers, will anyone be held accountable. Reward clear facts, accountability and empathy; punish spin, blame-shifting, "no comment" and losing temper. Follow up when the player dodges. At the final turn the briefing ends and you decide honestly: set "won" only if the player stayed composed and credible (interest 70 or more and comfort 65 or more); otherwise "declined". Set "left" only if the player walks out or loses control.',
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Beats: what happened, responsibility, the timeline, customers, accountability, the close. At turn '+T+' you must end it.'},
+    review:'a press conference after a controversial incident',how:{won:'the press found the player credible and composed',declined:'the press was not satisfied',left:'the player walked off',timeout:'the briefing ran out of time',player_left:'the player walked off'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Elena Marsh is a veteran reporter who has heard every spin line. She respects direct facts, owning the problem and concrete steps for customers. The player needed to stay composed and credible."}}),
+    persona:{name:'Elena Marsh',gender:'woman',age:44,job:'senior reporter',label:'The veteran reporter',interest:30,comfort:40,patience:55,mood:'sharp and impatient',look:{top:'suit',bottom:'trousers',sh:0x7a1d2a,pn:0x1B1B1B,style:'bun',glasses:false}},
+    situation:'You are the spokesperson for a company that has just recalled a product after complaints. You face the press in a crowded briefing room, and the reporters have questions.',
+    chat:{name:'Press Briefing',sub:'Cameras on. Hands up.',who:'Reporter'},
+    pre:'Cameras flash as you reach the podium. Elena Marsh from the front row is already on her feet. Say your opening statement.',
+    hint:'State what happened, own it, say what you are doing. Do not spin.',
+    openCue:function(p){return 'Elena Marsh raises her pen: she wants the first question.'},timeoutCue:function(p){return 'The press secretary signals: last question.'},
+    cast:{n:1},go:'Walk to the podium',placeholder:'Answer the press',leave:'Leave the podium'})
  ],
  career:[
   C('The Job Interview','Interview room',2,'Interview for Marketing Executive at BrightWave Media and score at least 80%.',{scene:'interview',mode:'seated',picker:{me:true,target:false},maxT:14,winScore:80,minWinTurn:13,skills:WORK_SK,ai:work({

@@ -36,3 +36,9 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - Scenes: interview (BrightWave), electronics (VoltBox, standing), beverage (Zest Corner), office (Mr Roberts), bank (Sterling). Challenges use `work(o)` in challenges.js to build the career `ai`.
 - Career challenges use a fixed persona (no target picker) and custom skill schema (WORK_SK) shown as dashboard cards on the review screen.
 - Untested with a real Gemini key; demo replies are still bar-flavoured.
+
+## Public Speaking batch (5 challenges, each its own scene)
+- Scenes: wedding (Best Man Toast), graduation, debate (1 vs 5), qa (Difficult Question), press (Press Conference). Built with a shared helper block at the top of each file (chair, guests, room, cam); audience are `lod:'lo'` crowd.
+- Player stands on the floor (seatY 0; a nonzero seatY triggers the seated pose, so stages are flat decor). One persona reacts as "the room" (grandmother, dean, opponent, questioner, reporter) using `spk()` (a `work()` variant with a speech-specific `extra`) and SPEAK_SK skills.
+- 1 vs 5 Debate: one visible opponent; the AI names a new opponent every 3 turns and tallies rounds. Real multi-opponent visuals are a later upgrade.
+- Untested with a real Gemini key.
