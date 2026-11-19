@@ -43,6 +43,9 @@ function work(o){
 var SPEAK_SK=[['opening','Opening'],['delivery','Delivery'],['clarity','Clarity'],['connection','Connection'],['humor','Humour & warmth'],['composure','Composure'],['closing','Closing']];
 var SPEAK_X='The player is giving a spoken performance and you are the person who reacts to it. Each player message is what they SAY out loud, in the moment. Reply as that person would in the room: short, human, react to what was actually said (a laugh, a nod, a hard question). Do not narrate for the whole room and do not coach.';
 function spk(o){var a=work(o);a.intro='The player is speaking to a room and you are one person reacting to them.';a.extra=SPEAK_X;return a}
+var FRIEND_SK=[['openers','Openers'],['curiosity','Curiosity'],['warmth','Warmth'],['humor','Humour'],['listening','Listening'],['openness','Sharing about you'],['invitation','Invitation']];
+var FRIEND_X='This is a casual, friendly encounter between two people, not a romance and not work. Speak like an ordinary person in this situation: short, natural, a little guarded at first with a stranger, warming up only if the player is genuinely friendly and interested. Never flirt.';
+function fr(o){var a=work(o);a.intro='The player is a stranger trying to get friendly with you.';a.extra=FRIEND_X;return a}
 var D={
  toasting:[
   C('Break the Ice at the Bar','Neighbourhood bar',1,'Start a conversation and leave with a way to see them again, if the interest is real.',{scene:'bar',mode:'approach',picker:{me:true,target:true},custom:true,maxT:14,ai:BAR_AI,
@@ -62,11 +65,81 @@ var D={
   C('Coffee by Text','Group chat',2,'Pick someone from the group chat, build rapport by message and get her to agree to coffee.')
  ],
  friends:[
-  C('New Neighbour','Doorstep',1,'Knock with a basket of cookies and get them to tell you what they do for a living.'),
-  C('Stadium','Stadium seats',2,'Get friendly enough that when you go for a drink in five minutes, they ask you to get one for them too.'),
-  C('Park Bench','City park',1,'Get on well enough that when they join their two friends, they invite you to play with them.'),
-  C('Cafeteria Connection','School cafeteria',1,'Find someone sitting alone, join them and talk until you know their name and class.'),
-  C('Club President','Debate club',3,'Approach five people and convince at least three to join your club.')
+  C("New Neighbour","Doorstep",1,"Knock with a basket of cookies and get them to tell you what they do for a living.",{scene:"doorstep",mode:'seated',picker:{me:true,target:false},maxT:8,skills:FRIEND_SK,ai:fr({
+    who:"Mr Okoro, a man who has lived on this street for years and answers the door when the player knocks",
+    scene:"SCENE: A quiet suburban street, Saturday morning. The player has just moved in next door and knocked on your door with a basket of cookies. You are polite but a little surprised and slightly guarded. You are happy to chat if they are friendly, but you do not volunteer personal details to a stranger straight away.",
+    feel:"interest is how much you like having this neighbour (0-100). comfort is how relaxed you feel. patience is how long you are willing to stand at the door.",
+    win:"Set \"won\" only when you have freely told the player what you do for a living, because the conversation became warm and they showed genuine interest (not because they interrogated you), and your interest is at least 60. Do not reveal your job in the first 3 exchanges unless asked in a way that feels natural and friendly. Set \"declined\" if you politely close the door without telling them, or if they pushed. Set \"left\" only if they are rude or invasive and you end it.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. You have a kettle on inside and about eight exchanges before you politely need to go in. At turn '+T+' you must end it.'},
+    review:"a first meeting between neighbours",how:{won:'the goal was reached naturally',declined:'it stayed polite but the goal was not reached',left:'the other person ended the chat and left',timeout:'the time ran out',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Mr Okoro is a retired-looking but still working engineer who runs a small repair business from home. He warms to people who ask about the street and the neighbourhood before asking about him, and he dislikes direct interrogation. The player needed him to tell them what he does for a living."}}),
+    persona:{name:'Mr Okoro',gender:'man',age:54,job:'runs a small repair business from home',label:'The polite, guarded neighbour',interest:40,comfort:45,patience:60,mood:'polite and a bit surprised',look:{top:'polo',bottom:'trousers',sh:0x6a8a5a,pn:0x3a3a40,style:'short',glasses:false,beard:true}},
+    situation:"You just moved in next door. With a basket of freshly baked cookies in your hands, you knock on your neighbour's door.",
+    chat:{name:"Next Door",sub:"Saturday morning. A quiet street.",who:"Neighbour"},
+    pre:"You knock. After a moment the door opens and Mr Okoro looks at you, then at the basket. Say hello.",
+    hint:"Be warm, ask about the street first, and let them share about themselves in their own time.",
+    openCue:function(p){return "Mr Okoro opens the door halfway and looks at the basket."},timeoutCue:function(p){return "Mr Okoro glances back inside: the kettle is calling."},
+    cast:{n:1},go:"Knock on the door",placeholder:"Say something to Mr Okoro",leave:"Walk back home"}),
+  C("Stadium","Stadium seats",2,"Get friendly enough that when you go for a drink in five minutes, they ask you to get one for them too.",{scene:"stadium",mode:'seated',picker:{me:true,target:false},maxT:10,skills:FRIEND_SK,ai:fr({
+    who:"Dayo, a fan sitting next to the player at a football match",
+    scene:"SCENE: A football match, evening, floodlights on. The player is sitting next to you, a stranger. You are watching the game and happy to talk about it, but you will not ask a stranger for favours unless you genuinely feel you have made a friend.",
+    feel:"interest is how much you enjoy the player's company (0-100). comfort is how relaxed you feel. patience is how much attention you are giving them rather than the match.",
+    win:"The player must become friendly enough that you ask them, without being prompted to, to bring you a drink when they go to the kiosk. Set \"won\" only when you ask them for a drink yourself, naturally, in your own words, because you have bonded (interest at least 65). If the player offers first, be pleased but only set \"won\" if you then accept warmly and hand over money or ask for your usual. Set \"declined\" if the half-time whistle comes and the bond is not there. Set \"left\" only if they are annoying and you move seats.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Roughly ten exchanges: the player goes for a drink around turn 8 to 10, so build toward that. At turn '+T+' you must end it.'},
+    review:"a conversation between strangers at a football match",how:{won:'the goal was reached naturally',declined:'it stayed polite but the goal was not reached',left:'the other person ended the chat and left',timeout:'the time ran out',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Dayo is a lifelong fan who loves talking about the match, the team's history, and bad refereeing. He warms to genuine football talk, humour and humility and cools if the player pretends to know more than they do. The player needed him to ask them to bring him a drink."}}),
+    persona:{name:'Dayo',gender:'man',age:33,job:'physiotherapist',label:'The friendly lifelong fan',interest:45,comfort:50,patience:70,mood:'focused on the game but open',look:{top:'tee',bottom:'jeans',sh:0xc83a3a,pn:0x2a3a5a,style:'buzz',glasses:false,beard:true}},
+    situation:"You are at a football match, sitting beside a stranger who is cheering for the same team. In five minutes you plan to go for a drink.",
+    chat:{name:"The Stadium",sub:"Evening match. Floodlights.",who:"Fan next to you"},
+    pre:"You find your seat. The stranger beside you shouts at the referee, then glances over. Say something.",
+    hint:"Talk about the game, share a laugh, and let them bring up the drink.",
+    openCue:function(p){return "Dayo glances at you, then back at the pitch."},timeoutCue:function(p){return "The half-time whistle goes and the stands begin to empty."},
+    cast:{n:1},go:"Find your seat",placeholder:"Say something to Dayo",leave:"Leave the seat"}),
+  C("Park Bench","City park",1,"Get on well enough that when they join their two friends, they invite you to play with them.",{scene:"park",mode:'seated',picker:{me:true,target:false},maxT:10,skills:FRIEND_SK,ai:fr({
+    who:"Amara, a young woman sitting on a park bench who is about to join her two friends for a kickabout",
+    scene:"SCENE: A sunny afternoon in the city park. The player sits on the same bench. Your two friends are playing nearby with a ball and will call you over soon. You are friendly but not looking to make a new friend: they have to earn it.",
+    feel:"interest is how much you like the player (0-100). comfort is how relaxed you feel. patience is how long you will keep chatting before your friends call you.",
+    win:"Around turn 7 to 8 your friends call you over to play. Set \"won\" only when you invite the player to join in your own words, because you genuinely like them (interest at least 65). Set \"declined\" if you go and do not invite them. Set \"left\" only if the player makes you uncomfortable and you leave early.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Your friends call you over about turn 8 of 10. At turn '+T+' you must end it.'},
+    review:"a conversation between strangers on a park bench",how:{won:'the goal was reached naturally',declined:'it stayed polite but the goal was not reached',left:'the other person ended the chat and left',timeout:'the time ran out',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Amara is outgoing and sporty and loves meeting people who are relaxed, funny and up for a laugh. She is put off by people who try too hard or only talk about themselves. The player needed her to invite them to play."}}),
+    persona:{name:'Amara',gender:'woman',age:26,job:'nurse',label:'The outgoing, sporty park-goer',interest:45,comfort:50,patience:70,mood:'relaxed and sunny',look:{top:'tank',bottom:'shorts',sh:0xe8a03a,pn:0x2a3a5a,style:'ponytail',glasses:false}},
+    situation:"You are at a park, sitting on a bench in the sun. A woman sits at the other end, and two of her friends are kicking a ball nearby.",
+    chat:{name:"The Park",sub:"Sunny afternoon. A bench by the path.",who:"On the bench"},
+    pre:"You sit down at the other end of the bench. She smiles, and her friends' ball rolls past your feet. Say something.",
+    hint:"Be easy and light. Pass the ball back, make a joke and ask about her.",
+    openCue:function(p){return "Amara smiles and looks up from her phone."},timeoutCue:function(p){return "Her friends wave her over to play."},
+    cast:{n:1},go:"Sit on the bench",placeholder:"Say something to Amara",leave:"Get up and go"}),
+  C("Cafeteria Connection","University cafeteria",1,"Find someone sitting alone, join them and talk until you know their name and course.",{scene:"cafeteria",mode:'seated',picker:{me:true,target:false},maxT:8,skills:FRIEND_SK,ai:fr({
+    who:"Kofi, a first-year university student eating alone in the cafeteria",
+    scene:"SCENE: A busy university cafeteria at lunch. You are a first-year student sitting alone, a bit shy because you have not made friends yet. The player comes over and asks to sit with you.",
+    feel:"interest is how much you want to keep chatting (0-100). comfort is how at ease you feel. patience is how long before you need to go to class.",
+    win:"Set \"won\" only when you have told the player both your name and your course, naturally, because the conversation felt easy (interest at least 60). You are shy: do not volunteer your name unless asked or invited, and be a little short at first. Set \"declined\" if you politely finish and leave without sharing both. Set \"left\" only if the player is pushy.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. You have about eight exchanges before your next lecture. At turn '+T+' you must end it.'},
+    review:"a conversation between two students in a cafeteria",how:{won:'the goal was reached naturally',declined:'it stayed polite but the goal was not reached',left:'the other person ended the chat and left',timeout:'the time ran out',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Kofi is shy, studies Computer Science and likes gaming and football. He opens up when someone is gentle and curious and shares first. He freezes if he is quizzed. The player needed his name and course."}}),
+    persona:{name:'Kofi',gender:'man',age:19,job:'first-year Computer Science student',label:'The shy first-year',interest:35,comfort:35,patience:60,mood:'quiet and a little lonely',look:{top:'tee',bottom:'jeans',sh:0x3a6aa8,pn:0x2a2a32,style:'short',glasses:true}},
+    situation:"You are in a busy university cafeteria. You spot someone sitting alone at a long table and decide to sit with them.",
+    chat:{name:"The Cafeteria",sub:"Lunchtime. Loud and crowded.",who:"Student"},
+    pre:"You carry your tray over. A student is eating alone at the end of the table. Say something.",
+    hint:"Ask if you can sit, share something about yourself first, then ask him something easy.",
+    openCue:function(p){return "Kofi looks up from his tray, a little surprised."},timeoutCue:function(p){return "Kofi glances at the clock: lecture soon."},
+    cast:{n:1},go:"Walk over",placeholder:"Say something to him",leave:"Walk away"}),
+  C("Club President","Debate club",3,"Approach five people and convince at least three to join your club.",{scene:"club",mode:'seated',picker:{me:true,target:false},maxT:15,skills:FRIEND_SK,ai:fr({
+    who:"five different prospective members of a debate club, one at a time. The player is the club president recruiting them",
+    scene:"SCENE: A university classroom after lessons. The player is the president of the debate club and is recruiting. Five students sit in a loose circle. Play ONE student at a time: introduce each by name when it is their turn (student 1 of 5: Tunde, then Mia, then Sam, then Ife, then Leo), each with their own doubts (no time, too shy, not interested in debating, already in another club, does not know the club). Spend about three exchanges on each. Name the current student in every reply.",
+    feel:"interest is how keen the current student is to join (0-100). comfort is how at ease the student feels. patience is how many students remain after this one, in a loose sense.",
+    win:"After each student, state in one short line whether they decided to join or not. A student joins only if the player addressed their actual doubt, was genuine and not pushy, and made the club sound worth joining. At turn 15 the session ends: set \"won\" only if at least 3 of the 5 students joined; otherwise \"declined\". Set \"left\" only if the player is pushy or insulting and the group disperses.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Five students, about three exchanges each; move on to the next student every three turns. At turn '+T+' you must end it.'},
+    review:"recruiting five students for a debate club",how:{won:'at least three of five students joined',declined:'fewer than three students joined',left:'the group dispersed',timeout:'the session ran out of time',player_left:'the player walked away'},
+    hidden:function(p){return "Hidden facts about "+p.name+": The students are real people with different reasons: one has no time, one is too shy, one thinks debating is just arguing, one is in another club, one has never heard of it. They join when the player listens, answers the actual doubt and is not pushy. The player needed three of the five to join."}}),
+    persona:{name:'Tunde',gender:'man',age:20,job:'second-year student',label:'The five prospects',interest:35,comfort:45,patience:70,mood:'curious but unconvinced',look:{top:'tee',bottom:'jeans',sh:0x4a8a6a,pn:0x2a2a32,style:'curly',glasses:false}},
+    situation:"You are the president of the debate club, and the club needs members. Five students are sitting in the classroom, and you have to convince at least three of them to join.",
+    chat:{name:"Debate Club",sub:"After class. Five students.",who:"Student"},
+    pre:"You walk to the middle of the circle. Student 1 of 5, Tunde, looks up. Introduce yourself and the club.",
+    hint:"Listen for each person's doubt and answer it. Do not give the same pitch to everyone.",
+    openCue:function(p){return "Tunde looks up from his notebook."},timeoutCue:function(p){return "The caretaker looks in: the room closes soon."},
+    cast:{n:1},go:"Walk in",placeholder:"Pitch the club",leave:"Leave the room"})
  ],
  startup:[
   C('Board Pitch','Conference room',3,'Pitch a proposal to the board and win their backing.'),

@@ -42,3 +42,9 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - Player stands on the floor (seatY 0; a nonzero seatY triggers the seated pose, so stages are flat decor). One persona reacts as "the room" (grandmother, dean, opponent, questioner, reporter) using `spk()` (a `work()` variant with a speech-specific `extra`) and SPEAK_SK skills.
 - 1 vs 5 Debate: one visible opponent; the AI names a new opponent every 3 turns and tallies rounds. Real multi-opponent visuals are a later upgrade.
 - Untested with a real Gemini key.
+
+## Friendship batch (5 challenges, each its own scene)
+- Scenes: doorstep (New Neighbour), stadium, park (bench), cafeteria (university), club (debate club room). `fr()` in challenges.js = `work()` variant with a friendly, non-romantic `extra`; skills FRIEND_SK. Personas are adults (19+).
+- Club President mirrors the debate: one visible prospect, the AI voices five students in turn and tallies joiners (need 3).
+- Outdoor scenes use `ground()` + `tree()` helpers at the top of the file (copy them; there is no shared module).
+- Untested with a real Gemini key.
