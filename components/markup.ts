@@ -11,10 +11,7 @@ export const MARKUP = `<div class="app">
       <h1>Say something.<br>See what happens.</h1>
       <p class="lede">Walk into real situations, talk to characters who have their own moods and limits, and find out how it went.</p>
     </div>
-    <div class="cards">
-      <button class="card t" data-cat="toasting"><div class="eyebrow">Romance</div><h2>Rizz</h2><p>Approach someone you like and see where the conversation goes.</p><div class="meta"><span class="pill c" id="p-toasting">0 of 20</span><span class="pill">1 playable</span></div><div class="num">20</div></button>
-      <button class="card f" data-cat="friends"><div class="eyebrow">Friendship</div><h2>Make Friends</h2><p>Meet strangers, join groups, and turn a hello into a friend.</p><div class="meta"><span class="pill c" id="p-friends">0 of 20</span><span class="pill">Coming soon</span></div><div class="num">20</div></button>
-    </div>
+    <div class="cards" id="cards"></div>
     <div class="how">
       <div><b>Walk in, then talk</b>Each challenge is a 3D place. You decide who to approach and when.</div>
       <div><b>No script</b>Type or dictate what you would really say. The character answers as a person would.</div>
@@ -41,7 +38,7 @@ export const MARKUP = `<div class="app">
         <div class="tip" id="tip">Drag to move. Swipe the view to look around.</div>
       </div>
       <div class="chat" id="chat">
-        <div class="ch-h"><div><b id="chname">The bar</b><div class="sub" id="chsub"></div></div><div class="time" id="timebox" hidden><small>Her time</small><div class="prog"><i id="timebar"></i></div></div></div>
+        <div class="ch-h"><div><b id="chname">The bar</b><div class="sub" id="chsub"></div></div><div class="time" id="timebox" hidden><small>Time</small><div class="prog"><i id="timebar"></i></div></div></div>
         <div class="log" id="log"></div>
         <div class="hint" id="hint" hidden></div>
         <div class="err" id="err" hidden></div>

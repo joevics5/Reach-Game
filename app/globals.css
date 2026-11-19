@@ -29,7 +29,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-top:20px}
 .card{position:relative;overflow:hidden;text-align:left;border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--panel);display:flex;flex-direction:column;gap:10px;min-height:230px;transition:transform .15s,border-color .15s}
 .card:hover{transform:translateY(-2px)}
-.card.t{--c:var(--coral)} .card.f{--c:var(--teal)}
+.card.t{--c:var(--coral)} .card.f{--c:var(--teal)} .card.s{--c:#9b8cff} .card.p{--c:#ff9f5a} .card.c{--c:#5aa9ff}
 .card:hover{border-color:var(--c)}
 .card::before{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,var(--c),transparent 68%);opacity:.28}
 .card .num{position:absolute;right:16px;bottom:6px;font:800 92px/1 var(--f-display);color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--c) 55%,transparent);pointer-events:none}
@@ -44,7 +44,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 /* list */
 .lh{padding:8px 0 6px}
 .lh h1{font:800 clamp(28px,6vw,40px)/1.05 var(--f-display);margin-top:6px}
-.lh.t h1{color:var(--coral)} .lh.f h1{color:var(--teal)}
+.lh.t h1{color:var(--coral)} .lh.f h1{color:var(--teal)} .lh.s h1{color:#9b8cff} .lh.p h1{color:#ff9f5a} .lh.c h1{color:#5aa9ff}
 .prog{height:6px;border-radius:4px;background:var(--panel2);margin-top:14px;overflow:hidden}
 .prog i{display:block;height:100%;background:var(--amber);width:0}
 .rows{display:flex;flex-direction:column;gap:8px;margin-top:16px}

@@ -1,9 +1,15 @@
 # Reach: notes for Claude sessions
 
-Reach is an AI social-simulation game (categories: Rizz, Make Friends). Next.js 15 shell (`app/`, `components/Game.tsx`) plus a vanilla JS / Three.js r128 game in `public/game/`. Gemini is called client-side (key entered in Settings). Deployed on Vercel from `main`. First challenge, "The Copper Lantern" bar, is playable.
+Reach is an AI social-simulation game (categories: Rizz, Make Friends). Next.js 15 shell (`app/`, `components/Game.tsx`) plus a vanilla JS / Three.js r128 game in `public/game/`. Gemini is called client-side (key entered in Settings). Deployed on Vercel from `main`. Playable: The Copper Lantern bar and The Date.
 
 ## Script load order (components/Game.tsx SCRIPTS)
-three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, game.js. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v8) and list new files in its ASSETS.
+three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, **challenges.js**, game.js. Scene files in `public/game/scenes/` load on demand when a challenge starts. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v9) and list new files in its ASSETS.
+
+## Challenge engine (data-driven)
+- **`public/game/challenges.js`** is the registry: 5 categories (toasting=Rizz, friends, startup, speaking, career), 5 challenges each (25). An entry with no `scene` shows as "coming soon". To make one playable give it: `scene` (file name in scenes/), `mode` ('approach' = walk around and choose someone, like the bar; 'seated' = start already talking), `cast:{n}`, `maxT` (turns), `ai` (intro, scene text, win rule, wrap-up, review wording; see BAR_AI / DATE_AI), `situation`, `pre`, `chat`, `circs`, `hint`, `openCue`, optional `winScore`/`minWinTurn` (hidden score decides the ending at the last turn, as in The Date), `custom` (optional name box).
+- **Every scene is its own place** (decided with the user): one file per scene in `public/game/scenes/<name>.js`, registered with `ReachKit.scenes.reg(name,{rx,rz,exit,build,setup,talkCam?,talkLimitZ?})`. `build(K)` returns `{scene,obst}` and is cached; `setup(K)` places `K.player(x,z,heading,seatY?)`, `K.person(persona,slot)` for the people you talk to, and extras in `W.npcs`. Only the characters are shared between scenes (cast bank). `window.ReachKit` exposes the helpers (bx, cy, cn, sp, mesh, M, MB, tex, haloTex, makeChar, randLook, pk, shuffle, V ...).
+- Built so far: Rizz 1 The Copper Lantern (`bar`), Rizz 2 The Date (`restaurant`, Rosa's). Chat-only challenges (coffee by text) will need a chat UI path with no 3D scene.
+- The demo replies used when no API key is set are still bar-flavoured.
 
 ## Characters (the important part)
 - **Do not use the old ellipsoid characters.** `makeChar(o)` in game.js delegates to `ReachAvatar.make(look)` (public/game/avatar.js). Set `window.__OLDCHARS=1` before load only to compare with the old ones.
