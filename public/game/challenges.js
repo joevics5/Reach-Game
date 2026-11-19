@@ -46,6 +46,9 @@ function spk(o){var a=work(o);a.intro='The player is speaking to a room and you 
 var FRIEND_SK=[['openers','Openers'],['curiosity','Curiosity'],['warmth','Warmth'],['humor','Humour'],['listening','Listening'],['openness','Sharing about you'],['invitation','Invitation']];
 var FRIEND_X='This is a casual, friendly encounter between two people, not a romance and not work. Speak like an ordinary person in this situation: short, natural, a little guarded at first with a stranger, warming up only if the player is genuinely friendly and interested. Never flirt.';
 function fr(o){var a=work(o);a.intro='The player is a stranger trying to get friendly with you.';a.extra=FRIEND_X;return a}
+var BIZ_SK=[['hook','Hook'],['clarity','Clarity'],['evidence','Evidence'],['confidence','Confidence'],['objections','Handling objections'],['value','Value for them'],['close','The ask']];
+var BIZ_X='This is a business conversation where the player is pitching or persuading and you hold the decision. Speak like a real decision-maker: direct, specific, sceptical until convinced, never rude without cause. Ask the hard question a real person in your seat would ask. Never agree just to be nice.';
+function biz(o){var a=work(o);a.intro='The player is making a business pitch to you.';a.extra=BIZ_X;return a}
 var D={
  toasting:[
   C('Break the Ice at the Bar','Neighbourhood bar',1,'Start a conversation and leave with a way to see them again, if the interest is real.',{scene:'bar',mode:'approach',picker:{me:true,target:true},custom:true,maxT:14,ai:BAR_AI,
@@ -142,11 +145,81 @@ var D={
     cast:{n:1},go:"Walk in",placeholder:"Pitch the club",leave:"Leave the room"})
  ],
  startup:[
-  C('Board Pitch','Conference room',3,'Pitch a proposal to the board and win their backing.'),
-  C('Shark Tank','Investor panel',3,'Pitch your business to five investors and get at least one to invest.'),
-  C('The First Client','New shop',2,'Walk into a newly opened business and convince the owner to make you their supplier.'),
-  C('The Difficult Client','Client office',3,'Win over an unhappy client who is thinking of cancelling their contract.'),
-  C('The Business Loan','Bank',3,'Present your business plan to the bank manager and secure the loan.')
+  C("Board Pitch","Conference room",3,"Pitch a proposal to the board and win their backing.",{scene:"boardroom",mode:'seated',picker:{me:true,target:false},maxT:12,skills:BIZ_SK,ai:biz({
+    who:"Ms Adeyemi, the chair of the board of a mid-sized company, with four other directors at the table who sometimes chip in through you",
+    scene:"SCENE: A boardroom, Tuesday morning. The player is a manager presenting a proposal to expand the company's delivery service into a new city. You chair the board and decide with the other directors, whose views you can quote (the finance director worries about cost, the operations director about risk, a younger director likes growth).",
+    feel:"interest is how much the board is inclined to back the proposal (0-100). comfort is how credible and prepared the player seems. patience is how much time the board is willing to give.",
+    win:"Ask for: the problem and opportunity, the numbers (cost, revenue, payback), the risks, the team and the timeline, and what the player needs from the board. Challenge vague or unsupported claims. At the final turn the board votes: set \"won\" only if the case was clear, evidence-backed and honest about risk (interest 75 or more and comfort 65 or more); otherwise \"declined\". Set \"left\" only if the player is dismissive or deceptive and you close the item.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Plan the pitch in beats: problem, opportunity, numbers, risk, ask, then the vote. At turn '+T+' you must end it.'},
+    review:"a proposal pitch to a company board",how:{won:'the player won the decision',declined:'the player did not win the decision',left:'the other side ended the meeting',timeout:'the meeting ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Ms Adeyemi is a fair, numbers-driven chair. She trusts clear structure, honest risk and a realistic payback period, and distrusts hype and round-number guesses. The player needed the board's backing."}}),
+    persona:{name:'Ms Adeyemi',gender:'woman',age:52,job:'chair of the board',label:'The fair, numbers-driven chair',interest:40,comfort:45,patience:65,mood:'attentive and measured',look:{top:'suit',bottom:'trousers',sh:0x24304a,pn:0x1B1B1B,style:'bun',glasses:true}},
+    situation:"You are presenting a proposal to expand a delivery service into a new city. The board is seated around the table and the chair is waiting for you to begin.",
+    chat:{name:"The Boardroom",sub:"Tuesday morning. Five directors.",who:"The chair"},
+    pre:"You reach the foot of the table. The screen behind the chair shows your first slide. Ms Adeyemi nods: you have the floor.",
+    hint:"Lead with the problem and the numbers. Name the risk before they do.",
+    openCue:function(p){return "Ms Adeyemi folds her hands and nods at the screen."},timeoutCue:function(p){return "The chair glances at her watch: the board has another item."},
+    cast:{n:1},go:"Take the floor",placeholder:"Present to the board",leave:"Withdraw the proposal"}),
+  C("Shark Tank","Investor panel",3,"Pitch your business to five investors and get at least one to invest.",{scene:"sharktank",mode:'seated',picker:{me:true,target:false},maxT:14,skills:BIZ_SK,ai:biz({
+    who:"a panel of five investors in a TV-style investment show. You speak as whichever investor is responding, naming them each time (Maya, Victor, Lena, Raj and Chloe)",
+    scene:"SCENE: A dark studio with a spotlight on the player, who is pitching their startup to five investors on a dais: Maya (tech), Victor (retail, blunt), Lena (consumer brands), Raj (numbers) and Chloe (impact). Each reply is one investor reacting or asking a question; vary who speaks. Invent a plausible startup from what the player says.",
+    feel:"interest is how much capital interest the panel has in the player's business (0-100). comfort is how credible the player's numbers and answers are. patience is how much time and attention the panel has left.",
+    win:"Run a pitch and Q&A: the problem, the product, the market, sales so far, margins and valuation, then the ask. Investors drop out one by one (say who and why) if the pitch fails them. At the final turn, each remaining investor either offers or passes: set \"won\" only if at least one investor makes a real offer because the player earned it (interest 70 or more); otherwise \"declined\". Do not invent the player's numbers for them; press when numbers are missing. Set \"left\" only if the player is insulting and the panel stops the pitch.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Plan: pitch, questions, offers or passes. At turn '+T+' you must end it.'},
+    review:"a startup pitch to five investors",how:{won:'the player won the decision',declined:'the player did not win the decision',left:'the other side ended the meeting',timeout:'the meeting ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": The panel rewards a clear ask (how much for what share), real traction, honest answers about margins, and a founder who knows their numbers. It punishes inflated valuations, vagueness and arguing back. The player needed at least one offer."}}),
+    persona:{name:'Victor',gender:'man',age:49,job:'retail investor',label:'The investor panel',interest:35,comfort:40,patience:60,mood:'blunt and curious',look:{top:'suit',bottom:'trousers',sh:0x6a1a1a,pn:0x1B1B1B,style:'bald',glasses:false,beard:true}},
+    situation:"You are on stage in an investment show. Five investors are waiting. You have to pitch your business and get at least one of them to invest.",
+    chat:{name:"The Investor Panel",sub:"Studio lights. Five investors.",who:"Investor"},
+    pre:"The lights come up on your mark. Five investors lean in. Victor says: \"You have two minutes. Tell us what you do and what you want.\"",
+    hint:"State your ask early: how much money for what share, and what you will do with it.",
+    openCue:function(p){return "Victor leans forward, elbows on the dais."},timeoutCue:function(p){return "The producer holds up a card: wrap up the pitch."},
+    cast:{n:1},go:"Step on to the mark",placeholder:"Pitch the panel",leave:"Walk off"}),
+  C("The First Client","New shop",2,"Walk into a newly opened business and convince the owner to make you their supplier.",{scene:"shop",mode:'seated',picker:{me:true,target:false},maxT:10,skills:BIZ_SK,ai:biz({
+    who:"Mrs Bello, the owner of a small shop that opened last week",
+    scene:"SCENE: A small shop that opened last week, mid-morning. You are the owner, busy unpacking stock, and you already have a supplier you are loosely happy with. A salesperson walks in with a pitch to become your supplier.",
+    feel:"interest is how interested you are in switching or adding a supplier (0-100). comfort is how much you trust the player. patience is how much time you can spare away from unpacking.",
+    win:"Set \"won\" only if you agree to become the player's customer or to a concrete trial order, because the player showed they understand your shop, offered something specific (price, reliability, terms) and handled your objections (you already have a supplier, cash is tight). Never agree in the first 3 exchanges. Set \"declined\" if you politely say no. Set \"left\" only if the player is pushy and you ask them to leave.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Roughly ten exchanges before a delivery arrives and you must go. At turn '+T+' you must end it.'},
+    review:"a sales pitch to a new shop owner",how:{won:'the player won the decision',declined:'the player did not win the decision',left:'the other side ended the meeting',timeout:'the meeting ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Mrs Bello is practical and cash-conscious. She wants reliability and fair payment terms more than a low headline price, and she is wary of pushy salespeople. The player needed a supplier deal or a trial order."}}),
+    persona:{name:'Mrs Bello',gender:'woman',age:45,job:'owner of a new shop',label:'The practical new shop owner',interest:35,comfort:40,patience:55,mood:'busy and a little wary',look:{top:'blouse',bottom:'aline',sh:0xd8a03a,pn:0x3a2a1a,style:'bun',glasses:false}},
+    situation:"A new shop has just opened in your area. You walk in with a pitch to become the owner's supplier.",
+    chat:{name:"Grand Opening",sub:"A new shop, half stocked.",who:"Shop owner"},
+    pre:"You push the door of the new shop, under a Grand Opening banner. The owner looks up from a box of stock. Say hello.",
+    hint:"Ask about her shop first. Offer something specific, not a general pitch.",
+    openCue:function(p){return "Mrs Bello looks up from the box she is unpacking."},timeoutCue:function(p){return "A delivery van pulls up outside and Mrs Bello looks over."},
+    cast:{n:1},go:"Walk in",placeholder:"Pitch the owner",leave:"Walk out"}),
+  C("The Difficult Client","Client office",3,"Win over an unhappy client who is thinking of cancelling their contract.",{scene:"clientoffice",mode:'seated',picker:{me:true,target:false},maxT:12,skills:BIZ_SK,ai:biz({
+    who:"Mr Vance, a senior client who is unhappy with the service and is considering cancelling his contract",
+    scene:"SCENE: Mr Vance's corner office, Thursday afternoon. The player is the account manager. Over the last quarter there were late deliveries and a billing mistake. You have a cancellation letter ready on your desk and you are cold, direct and short on time.",
+    feel:"interest is how willing you are to stay with the company (0-100, you start low). comfort is how heard and respected you feel. patience is how much time you will give them.",
+    win:"Set \"won\" only when the player has listened, acknowledged the problems without excuses, and offered a concrete remedy with dates and accountability, and you agree to stay (interest 70 or more and comfort 60 or more). Punish excuses, blaming others, vague promises and discounts offered in place of fixes. Set \"declined\" if you decide to cancel. Set \"left\" only if the player is disrespectful and you end the meeting.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. By about turn 8 you want a concrete plan. At turn '+T+' you must end it.'},
+    review:"a meeting with an unhappy client",how:{won:'the player won the decision',declined:'the player did not win the decision',left:'the other side ended the meeting',timeout:'the meeting ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Mr Vance values being heard first, then a specific plan with a named owner and dates. He hates excuses and generic apologies. The player needed him to stay with the contract."}}),
+    persona:{name:'Mr Vance',gender:'man',age:58,job:'managing director of a client company',label:'The cold, direct client',interest:20,comfort:30,patience:50,mood:'cold and short on time',look:{top:'suit',bottom:'trousers',sh:0x2a2a30,pn:0x1B1B1B,style:'short',glasses:false,beard:false}},
+    situation:"You are the account manager. A major client, Mr Vance, is unhappy about late deliveries and a billing mistake, and is thinking of cancelling. You meet him at his office.",
+    chat:{name:"Mr Vance's Office",sub:"Thursday afternoon. The skyline.",who:"The client"},
+    pre:"Mr Vance does not stand. A folded letter lies on his desk. \"You have ten minutes,\" he says. Respond.",
+    hint:"Listen first, own the problems, then offer a concrete fix with dates.",
+    openCue:function(p){return "Mr Vance slides the letter an inch toward you."},timeoutCue:function(p){return "Mr Vance looks at the time: his next meeting."},
+    cast:{n:1},go:"Go in",placeholder:"Talk to Mr Vance",leave:"Leave the office"}),
+  C("The Business Loan","Bank",3,"Present your business plan to the bank manager and secure the loan.",{scene:"loan",mode:'seated',picker:{me:true,target:false},maxT:12,skills:BIZ_SK,ai:biz({
+    who:"Ms Chukwu, a loan officer at a branch of a high street bank",
+    scene:"SCENE: A glass booth at the loan desk of a bank branch, Wednesday morning. The player is a small business owner asking for a business loan. You are a careful, fair loan officer who wants to lend to good businesses but must protect the bank.",
+    feel:"interest is how willing you are to approve the loan (0-100). comfort is how much you trust the player's plan and honesty. patience is how much time you have for this appointment.",
+    win:"Ask about: what the business does, what the money is for, how much, the player's own contribution, revenue so far, costs, how the loan will be repaid, collateral and the biggest risk. Press on gaps. At the final turn decide: set \"won\" only if the plan is credible, the numbers hold, and repayment is realistic (interest 75 or more and comfort 65 or more); otherwise \"declined\" with one honest reason. Set \"left\" only if you catch the player lying.",
+    wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. Plan: the business, the ask, the numbers, repayment, risk, the decision. At turn '+T+' you must end it.'},
+    review:"a business loan meeting at a bank",how:{won:'the player won the decision',declined:'the player did not win the decision',left:'the other side ended the meeting',timeout:'the meeting ran out of time',player_left:'the player walked out'},
+    hidden:function(p){return "Hidden facts about "+p.name+": Ms Chukwu approves clear plans with a reasonable amount, a personal contribution, realistic revenue and a believable repayment plan. She declines vague plans, inflated forecasts and asking for more than the business needs. The player needed the loan approved."}}),
+    persona:{name:'Ms Chukwu',gender:'woman',age:43,job:'loan officer at the bank',label:'The careful, fair loan officer',interest:35,comfort:45,patience:65,mood:'professional and careful',look:{top:'blouse',bottom:'trousers',sh:0x0f5a8a,pn:0x1B1B1B,style:'curly',glasses:true}},
+    situation:"You own a small business and have come to the bank to ask for a business loan. The loan officer has your application in front of her.",
+    chat:{name:"Branch Loan Desk",sub:"Wednesday morning. A glass booth.",who:"Loan officer"},
+    pre:"You sit down in the glass booth. Ms Chukwu opens your application and looks up. Tell her about your business.",
+    hint:"Know your numbers: how much, what for, how you will repay it.",
+    openCue:function(p){return "Ms Chukwu squares your application on the desk."},timeoutCue:function(p){return "Ms Chukwu glances at her next appointment."},
+    cast:{n:1},go:"Take your seat",placeholder:"Present to the loan officer",leave:"End the meeting"})
  ],
  speaking:[
   C('Best Man Toast','Wedding reception',2,'Give a toast that is warm, funny and respectful.',{scene:'wedding',mode:'seated',picker:{me:true,target:false},maxT:8,skills:SPEAK_SK,ai:spk({

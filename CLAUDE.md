@@ -48,3 +48,9 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - Club President mirrors the debate: one visible prospect, the AI voices five students in turn and tallies joiners (need 3).
 - Outdoor scenes use `ground()` + `tree()` helpers at the top of the file (copy them; there is no shared module).
 - Untested with a real Gemini key.
+
+## Startup batch (5 challenges, each its own scene)
+- Scenes: boardroom (Board Pitch), sharktank (investor studio, five seated investors), shop (The First Client), clientoffice (Difficult Client), loan (branch loan desk; distinct from the Career `bank` scene). `biz()` = `work()` variant with a business-pitch `extra`; skills BIZ_SK.
+- Shark Tank mirrors the debate pattern: one persona object, the AI voices the five investors by name.
+- Camera tip: `cam(cx,cz,r,py,ty,a0)` orbits the midpoint; use a0 around 0.5-1.0 so the player does not block the other person.
+- Untested with a real Gemini key.
