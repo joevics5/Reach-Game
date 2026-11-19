@@ -58,3 +58,4 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 ## Rizz additions
 - The Last Bus (scene `busstop`, uses `BUS_AI`, same target-picker flow as The Date; win needs a day AND a time) and Table for More (scene `cafe`, fixed persona Jade voicing three friends, `work()` ai with its own skills). Rizz now has 4 playable; Coffee by Text still needs a chat-only UI (no 3D scene).
 - Untested with a real Gemini key.
+- Coffee by Text (scene `phonechat`, `TEXT_AI`): no chat-only mode was added. The scene is a living room with the group chat on a wall screen and the contact standing on a lit plinth, so the standard seated engine works unchanged. All 25 starter challenges are now playable. A true chat-only mode (no 3D) would be an engine change if ever wanted.

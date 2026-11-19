@@ -32,6 +32,16 @@ var BUS_AI={
  how:{won:'she or he agreed to a day and a time before the bus came',declined:'the character did not agree a plan before the bus came',left:'the character moved away or left',timeout:'the bus came before a plan was made',player_left:'the player walked away'}
 };
 
+var TEXT_AI={
+ intro:'The player is texting you. This is a text conversation, not a face-to-face one.',
+ scene:function(p){return 'SCENE: Friday evening. You are in a group chat with a friend group. The player messaged you privately after chatting in the group. You are '+p.circ+'. You only text: no actions, no body language. Reply like a real person on a phone: short messages, casual, sometimes lowercase, an occasional emoji (not every message). You decide honestly. Your mood: '+p.mood+'.'},
+ style:'Text like a real person on a phone',
+ win:'"end" must be null while the conversation continues. Set "won" only when your interest is at least 70 and comfort at least 60, and the player has proposed a coffee with a day, a time and a place (or you filled in the gaps together and clearly agreed), and you would honestly say yes. Confirm it in your own words, in "cue" write one line like "you agree on Saturday at 3, at the corner cafe". Do not say yes in the first 3 exchanges unless truly earned. Do not agree to a vague "we should meet up": reply warmly and ask when and where. Never write digits that look like a phone number. Set "declined" when you kindly say no or the chat fizzles out politely. Set "left" when you stop replying because they were pushy, creepy or rude.',
+ wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. You are about to head out for the evening around turn '+(T-1)+'. At turn '+T+' you say goodnight and must end the chat.'},
+ review:'a text conversation that tried to set up a coffee',
+ how:{won:'she or he agreed to coffee with a day, a time and a place',declined:'the character politely did not agree to coffee',left:'the character stopped replying',timeout:'the chat ran out of time',player_left:'the player stopped texting'}
+};
+
 var DATE_AI={
  intro:'The player is on a first date with you.',
  scene:function(p){return 'SCENE: Rosa\'s, a small candlelit restaurant, about 8pm on a Saturday. You and the player are sitting at a table for two. You are '+p.circ+'. You agreed to this date, so you are open to a good evening but you decide honestly how it goes. Your mood: '+p.mood+'.'},
@@ -94,7 +104,12 @@ var D={
     hint:'Talk to all three, be playful, and respect that it is their time. Let them offer the chair.',
     openCue:function(p){return 'The three friends look up from their coffees.'},timeoutCue:function(p){return 'The waiter arrives with their food and the group turns back to each other.'},
     cast:{n:1},go:'Walk over',placeholder:'Say something to the table',leave:'Walk away'}),
-  C('Coffee by Text','Group chat',2,'Pick someone from the group chat, build rapport by message and get her to agree to coffee.')
+  C('Coffee by Text','Group chat',2,'Pick someone from the group chat, build rapport by message and get her to agree to coffee.',{scene:'phonechat',mode:'seated',picker:{me:true,target:true},custom:true,maxT:12,ai:TEXT_AI,
+    situation:'You are on the sofa on a Friday evening with your phone, in a group chat of friends-of-friends. One person stood out. You message her or him privately. The goal: build rapport by text and get her or him to agree to coffee, with a day, a time and a place.',
+    chat:{name:'Messages',sub:'Friday evening. Typing...',who:'Private chat'},
+    pre:'You open a private chat with {Name} from the group. The group screen glows on the wall and her messages appear one by one. Send the first message.',
+    circs:['curled up on the sofa with a show on','getting ready to head out later','on the train home, scrolling','lying on the bed with the phone'],
+    hint:'Reply to what they actually said, keep messages short and playful, and when it is going well, suggest a specific coffee: day, time, place.',openCue:function(p){return p.name+' is online. Typing...'},timeoutCue:function(p){return p.name+' says goodnight: the phone goes quiet.'},cast:{n:1},go:'Open the chat',placeholder:'Message {her}',leave:'Put the phone down'})
  ],
  friends:[
   C("New Neighbour","Doorstep",1,"Knock with a basket of cookies and get them to tell you what they do for a living.",{scene:"doorstep",mode:'seated',picker:{me:true,target:false},maxT:8,skills:FRIEND_SK,ai:fr({
