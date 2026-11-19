@@ -31,3 +31,8 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 ## Process
 - Avatar design is done in the lab pages first (`lab/avatars/lab/avatar-male.html`, `avatar-female.html`), then ported.
 - The user may revoke GitHub access between sessions. Push needs the repo attached to the session (`joevics5/Reach-Game`; the proxy blocks unattached repos).
+
+## Career batch (5 challenges, each its own scene)
+- Scenes: interview (BrightWave), electronics (VoltBox, standing), beverage (Zest Corner), office (Mr Roberts), bank (Sterling). Challenges use `work(o)` in challenges.js to build the career `ai`.
+- Career challenges use a fixed persona (no target picker) and custom skill schema (WORK_SK) shown as dashboard cards on the review screen.
+- Untested with a real Gemini key; demo replies are still bar-flavoured.
