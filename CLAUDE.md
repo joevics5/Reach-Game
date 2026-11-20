@@ -3,7 +3,7 @@
 Reach is an AI social-simulation game (categories: Rizz, Make Friends). Next.js 15 shell (`app/`, `components/Game.tsx`) plus a vanilla JS / Three.js r128 game in `public/game/`. Gemini is called client-side (key entered in Settings). Deployed on Vercel from `main`. Playable: The Copper Lantern bar and The Date.
 
 ## Script load order (components/Game.tsx SCRIPTS)
-three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, **challenges.js**, game.js. Scene files in `public/game/scenes/` load on demand when a challenge starts. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v9) and list new files in its ASSETS.
+three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, **challenges.js**, **group.js**, game.js. Scene files in `public/game/scenes/` load on demand when a challenge starts. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v17) and list new files in its ASSETS.
 
 ## Challenge engine (data-driven)
 - **`public/game/challenges.js`** is the registry: 5 categories (toasting=Rizz, friends, startup, speaking, career), 5 challenges each (25). An entry with no `scene` shows as "coming soon". To make one playable give it: `scene` (file name in scenes/), `mode` ('approach' = walk around and choose someone, like the bar; 'seated' = start already talking), `cast:{n}`, `maxT` (turns), `ai` (intro, scene text, win rule, wrap-up, review wording; see BAR_AI / DATE_AI), `situation`, `pre`, `chat`, `circs`, `hint`, `openCue`, optional `winScore`/`minWinTurn` (hidden score decides the ending at the last turn, as in The Date), `custom` (optional name box).
@@ -67,3 +67,10 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - Goals/titles/places of the 25 challenges are the user's wording and must not be reworded (Cafeteria = "School cafeteria ... name and class"; Table for More = "Restaurant").
 - Names are global (no region-specific cluster) and skin tones in `cast.js` SK run fair to deep, spread evenly across the 30. Keep both when adding characters.
 - Brief page has an explicit "Back to <category>" button.
+
+## Group engine (`public/game/group.js`, `window.ReachGroup`)
+Copied in spirit from Courtroom Quest (`src/lib/ai/trialAI.ts`): every agent is its own AI call over a shared transcript (`G.grp.gh`); concurrency 4, retries 2s/6s, quorum, optional deliberation round, no invented votes for absent agents.
+- Add `group:{...}` to a challenge: `lead`, `speak:'lead'|'rotate'|'rounds'`, `chime`, `open`, `scene`, `rubric`, `rateIntro`, `agents:[{name,gender,age,job,role,who,where}]`, `audience:{n,talkers,role,jobs,where}`, `rule:{type:'share'|'any'|'majority',min}`; `rounds:{n,perRound,min,raters:'judges'|'self',opponents:[...]}` for debate/club (lead is swapped each round).
+- game.js glue: `buildGroup`, `bindAgents` (adopts static scene NPCs as named agents; scenes need enough NPCs), `groupStart/groupTurn/groupRoundEnd/groupFinish`, `groupReviewPrompt`, `panelHtml` (per-agent ratings on the end screen).
+- Used by: Best Man, Graduation, Difficult Question, Press, Shark Tank, Board Pitch, Table for More, 1 vs 5 Debate, Club President. Other challenges stay 1:1.
+- Only tested on the demo path (no key); verify with a live Gemini key.

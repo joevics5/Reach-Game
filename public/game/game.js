@@ -59,7 +59,7 @@ function makePersona(target,arch){
 /* A cast of n different people: personalities, names and looks (looks come from the cast bank). */
 function fixedPersona(f,target){
  var deal=window.ReachCast?ReachCast.deal(f.gender==='woman'?'f':'m',1)[0]:{};var L=deal;if(f.look)for(var k in f.look)L[k]=f.look[k];
- return {gender:f.gender,name:f.name,age:f.age,job:f.job,arch:{label:f.label,d:f.desc||''},circ:f.circ||'',mood:f.mood||'focused',hobbies:f.hobbies||[],likes:f.likes||[],offs:f.offs||[],notInto:false,notReason:'',
+ return {gender:f.gender,name:f.name,age:f.age,job:f.job,arch:{label:f.label||f.job,d:f.desc||''},circ:f.circ||'',mood:f.mood||'focused',hobbies:f.hobbies||[],likes:f.likes||[],offs:f.offs||[],notInto:false,notReason:'',
   interest:f.interest,comfort:f.comfort,patience:f.patience,i0:f.interest,look:L,fixed:f,stool:0,faceOut:false};
 }
 function makeCast(target,ch){
@@ -113,6 +113,7 @@ var SK_DEFAULT=[['opening','Opening'],['listening','Listening'],['tone','Tone an
 function skillList(){return (G.ch&&G.ch.skills)||SK_DEFAULT}
 function skillSchema(){return skillList().map(function(k){return '"'+k[0]+'":integer 0-10'+(k[0]==='recovery'?' or null if nothing needed recovering':'')}).join(',')}
 function reviewPrompt(){
+ if(G.ch.group)return groupReviewPrompt();
  var p=G.p,lines=G.notes.map(function(n,i){return 'Turn '+(i+1)+'\nPlayer: "'+n.u+'"\n'+p.name+': "'+n.say+'" ['+n.cue+']\nJudge note: '+n.tag+', '+n.quality+', '+n.note}).join('\n\n');
  var how=G.ch.ai.how[G.end]||G.end;
  return 'You are the hidden judge of a social simulation game, writing feedback for a player after '+G.ch.ai.review+' with '+p.name+' ('+p.arch.label+', '+p.age+', '+p.job+'). '+(G.ch.ai.hidden?G.ch.ai.hidden(p):'Hidden facts about '+p.name+': openness to a connection at the start was '+lvl(p)+'; likes: '+p.likes.join('; ')+'; dislikes: '+p.offs.join('; ')+'; interests: '+p.hobbies.join(', ')+'.')+' The player is a '+G.me+'. '+(G.approach?'The player approached '+G.approach+'. ':'')+'Ending: '+G.end+' ('+how+'). Final private feelings: interest '+G.cur.interest+', comfort '+G.cur.comfort+', patience '+G.cur.patience+'.\n\nTRANSCRIPT:\n'+lines+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a yes but the player respected the signals and handled it well (warm exit, accepted a no, did not push). Otherwise "failed". Be specific and fair. Quote the player\'s real words. Do not treat any compliment or phrase as automatically good; judge it in context. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{'+skillSchema()+'},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string (what they could have said instead, in their own voice)}],"herView":string (1-2 sentences in her or his own voice about how the player came across),"tryNext":string (one concrete thing to try next time)}';
@@ -276,6 +277,7 @@ function beginSeated(){
  setTimeout(function(){try{$('msg').focus({preventScroll:true})}catch(e){}},50);
 }
 function cueLine(t){var d=document.createElement('div');d.className='m cue';d.textContent=t;$('log').appendChild(d);scrollLog()}
+function addMsgN(cls,t,name){var d=document.createElement('div');d.className='m '+cls;var n=document.createElement('small');n.style.cssText='display:block;font-weight:700;opacity:.7;margin-bottom:2px';n.textContent=name;d.appendChild(n);d.appendChild(document.createTextNode(t));$('log').appendChild(d);scrollLog();return d}
 function addMsg(cls,t){var d=document.createElement('div');d.className='m '+cls;d.textContent=t;$('log').appendChild(d);scrollLog();return d}
 function scrollLog(){var l=$('log');l.scrollTop=l.scrollHeight}
 function beginTalk(){
@@ -294,6 +296,7 @@ function beginTalk(){
   cueLine(sceneCue());
   if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(seatedCh?(G.ch.hint||'Listen to the answers and build on them.'):openHint(dir))}
   $('msg').focus({preventScroll:true});
+  if(G.ch.group)groupStart();
  });
 }
 function sceneCue(){
@@ -304,6 +307,135 @@ function sceneCue(){
 }
 function openHint(dir){
  return dir==='behind'?'You came from behind, so start gently. A calm hello that gives space works better than a loud one.':'Keep it light and about the moment: the place, the music, the match. Ask something they can answer easily.';
+}
+
+/* ---------- GROUP ENGINE glue (the logic lives in group.js) ---------- */
+function buildGroup(){
+ var g=G.ch&&G.ch.group;G.grp=null;G.panel=null;if(!g)return;
+ var lead={id:'lead',name:G.p.name,gender:G.p.gender,age:G.p.age,job:G.p.job,role:g.leadRole||'',who:g.leadWho||'',talks:true,rates:g.leadRates!==false,lead:true};
+ G.grp={cfg:g,lead:lead,agents:[lead],gh:[],roundsWon:0,roundLog:[]};
+}
+function sexOf(n){return n.c.spec&&n.c.spec.sex==='f'?'woman':'man'}
+/* Gives the named agents and the audience a body: they take over people the scene already placed. */
+function bindAgents(){
+ var gp=G.grp;if(!gp)return;var g=gp.cfg;
+ var pool=W.npcs.filter(function(n){return !n.wander&&n.c&&!n.agent});
+ function free(w){return pool.filter(function(n){return !n.agent&&(!w||w(n.c.g.position.x,n.c.g.position.z))})}
+ (g.agents||[]).forEach(function(d){
+  var a=Object.assign({lead:false,talks:true,rates:true},d),c=free(d.where),m=c.filter(function(n){return !d.gender||sexOf(n)===d.gender})[0]||c[0];
+  if(m){m.agent=a;a.npc=m;if(!d.gender)a.gender=sexOf(m)}
+  gp.agents.push(a);
+ });
+ var A=g.audience;
+ if(A){
+  var used=gp.agents.map(function(a){return a.name}),c=free(A.where);
+  c=c.filter(function(n){return n.c.seat}).concat(c.filter(function(n){return !n.c.seat}));
+  c.slice(0,A.n).forEach(function(n,i){var a=ReachGroup.crowdAgent(i,sexOf(n),NAMES,A,used);a.talks=i<(A.talkers||0);a.rates=A.rates!==false;a.npc=n;n.agent=a;gp.agents.push(a)});
+ }
+ gp.agents.forEach(function(a){if(a.npc){var tag=nameSprite(a.name,false);tag.scale.set(1.15,.29,1);tag.position.set(0,2.35,0);tag.renderOrder=20;tag.visible=false;a.npc.c.g.add(tag);a.npc.tag=tag}});
+}
+function gctx(round){
+ var gp=G.grp,g=gp.cfg,per=g.rounds?g.rounds.perRound:0;
+ var x={g:g,scene:g.scene,me:G.me,gh:gp.gh,openTask:g.openTask,rateIntro:g.rateIntro};
+ if(g.rounds){x.round=round;x.per=per;x.turnInRound=((G.turn-1)%per)+1;x.roundText='round '+(round+1)+' of '+g.rounds.n+', the exchange between the player and '+gp.lead.name;
+  x.scene=g.scene+' This is round '+(round+1)+' of '+g.rounds.n+' and the opponent is '+gp.lead.name+'.'}
+ return x;
+}
+function agentSpeak(a){if(a.lead)W.speak=2.8;else if(a.npc)a.npc.speak=3.2}
+function showOuts(outs){
+ outs.forEach(function(o){if(o.r.cue)cueLine(o.r.cue);if(o.r.say)addMsgN('her',o.r.say,o.a.name);agentSpeak(o.a)});
+}
+function typingOn(){var tp=document.createElement('div');tp.className='typing';tp.innerHTML='<i></i><i></i><i></i>';$('log').appendChild(tp);scrollLog();return tp}
+function inputOn(on){G.busy=!on;$('send').disabled=!on;$('msg').disabled=!on;if(on)try{$('msg').focus({preventScroll:true})}catch(e){}}
+async function groupStart(){
+ var gp=G.grp,g=gp.cfg;if(!g.open)return;
+ inputOn(false);var tp=typingOn();
+ try{var r=await ReachGroup.speak(gctx(0),gp.lead,'open');tp.remove();gp.gh.push({who:gp.lead.name,role:gp.lead.role,text:r.say,cue:r.cue});showOuts([{a:gp.lead,r:r}])}
+ catch(e){tp.remove();setErr('The first reply did not come through. You can start speaking anyway.')}
+ inputOn(true);
+}
+async function groupTurn(txt,tp,entry){
+ var gp=G.grp,g=gp.cfg,T=G.maxT,len0=gp.gh.length;
+ gp.gh.push({who:'player',text:txt});
+ var pl=ReachGroup.plan(g,gp,G.turn,T),ctx=gctx(pl.round),outs=[];
+ try{
+  for(var i=0;i<pl.speakers.length;i++){
+   var a=pl.speakers[i],r=await ReachGroup.speak(ctx,a,'turn');outs.push({a:a,r:r});gp.gh.push({who:a.name,role:a.role,text:r.say,cue:r.cue});
+  }
+ }catch(e){
+  tp.remove();gp.gh.length=len0;G.hist.pop();G.turn--;inputOn(true);
+  var m=(e&&e.code==='rate_limited')?'Too many requests right now. Wait a moment and send again.':(e&&e.code==='bad_key')?'Gemini rejected the key or request'+(e.detail?' ('+e.detail+')':'')+'. Check Settings.':'The reply did not come through. Your message is back in the box, so you can send it again.';
+  setErr(m);$('msg').value=txt;autoGrow();
+  var mes=$('log').querySelectorAll('.m.me');if(mes.length)mes[mes.length-1].remove();
+  return;
+ }
+ tp.remove();showOuts(outs);
+ G.notes.push({u:txt,say:outs.map(function(o){return o.a.name+': '+o.r.say}).join(' | '),cue:outs.map(function(o){return o.r.cue}).filter(Boolean).join(' '),tag:'other',quality:'ok',note:''});
+ updateTime();
+ if(outs.some(function(o){return o.r.end==='left'})){G.busy=false;return finishChat('left')}
+ if(pl.endRound){return groupRoundEnd(pl)}
+ if(pl.finish&&g.speak!=='rounds'){return groupFinish()}
+ inputOn(true);
+}
+/* Debate and club: after each round the round's raters vote, then the next opponent steps up. */
+async function groupRoundEnd(pl){
+ var gp=G.grp,g=gp.cfg,R=g.rounds,ctx=gctx(pl.round);
+ var raters=R.raters==='self'?[gp.lead]:gp.agents.filter(function(a){return !a.lead&&a.rates});
+ var tp=typingOn();cueLine(R.raters==='self'?gp.lead.name+' thinks it over.':'The judges confer.');
+ var res;
+ try{res=await ReachGroup.rate(ctx,raters,{deliberate:g.deliberate})}
+ catch(e){tp.remove();return groupRetry(function(){return groupRoundEnd(pl)},e)}
+ tp.remove();
+ var won=ReachGroup.decide(R.rule||{type:'majority'},res);if(won)gp.roundsWon++;
+ gp.roundLog.push({round:pl.round,name:gp.lead.name,res:res,won:won});
+ cueLine(R.raters==='self'?(won?gp.lead.name+' says yes: they are joining.':gp.lead.name+' politely passes.'):'Round '+(pl.round+1)+': '+res.yes+' to '+res.no+' for you. '+(won?'You take the round.':'The round goes to '+gp.lead.name+'.'));
+ if(pl.finish){
+  G.panel={kind:'rounds',rounds:gp.roundLog,min:R.min,won:gp.roundsWon};
+  var ok=gp.roundsWon>=R.min;cueLine((R.raters==='self'?'Joined: ':'Rounds won: ')+gp.roundsWon+' of '+R.n+'. You needed '+R.min+'.');
+  G.busy=false;return finishChat(ok?'won':'declined');
+ }
+ var d=R.opponents[pl.round+1];swapLead(d);
+ var tp2=typingOn();
+ try{var r=await ReachGroup.speak(gctx(pl.round+1),gp.lead,'open');tp2.remove();gp.gh.push({who:'note',text:'Round '+(pl.round+2)+' of '+R.n+' begins with '+gp.lead.name});gp.gh.push({who:gp.lead.name,role:gp.lead.role,text:r.say,cue:r.cue});showOuts([{a:gp.lead,r:r}])}
+ catch(e){tp2.remove();gp.gh.push({who:'note',text:'Round '+(pl.round+2)+' of '+R.n+' begins with '+gp.lead.name})}
+ inputOn(true);
+}
+function swapLead(d){
+ var gp=G.grp,p=fixedPersona(d,d.gender);
+ if(W.her){W.dyn.remove(W.her.g);for(var i=W.girls.length-1;i>=0;i--)if(W.girls[i].c===W.her)W.girls.splice(i,1)}
+ W.sel=-1;K.person(p,W.leadSlot);selectGirl(W.girls.length-1);
+ var l=gp.lead;l.name=p.name;l.gender=p.gender;l.age=p.age;l.job=p.job;l.who=d.who||'';l.role=gp.cfg.leadRole||'';
+ $('chname').textContent=p.name;cueLine(p.name+' steps up.');
+}
+async function groupFinish(){
+ var gp=G.grp,g=gp.cfg,ctx=gctx(0),raters=gp.agents.filter(function(a){return a.rates});
+ var tp=typingOn();cueLine('The room makes up its mind.');
+ var res;
+ try{res=await ReachGroup.rate(ctx,raters,{deliberate:g.deliberate})}
+ catch(e){tp.remove();return groupRetry(groupFinish,e)}
+ tp.remove();
+ var won=ReachGroup.decide(g.rule,res);
+ G.panel={kind:'room',res:res,rule:g.rule,rubric:g.rubric,total:raters.length};
+ cueLine(res.yes+' of '+(res.yes+res.no)+' said yes'+(res.absent?' ('+res.absent+' could not be reached)':'')+'.');
+ G.busy=false;finishChat(won?'won':'declined');
+}
+/* A rating call failed (rate limit, no answer): keep the conversation and offer to ask again. */
+function groupRetry(fn,e){
+ var m=(e&&e.code==='rate_limited')?'Too many requests right now.':(e&&e.code==='bad_key')?'Gemini rejected the key or request. Check Settings.':(e&&e.code==='quorum')?'Not enough of the room could be reached ('+(e.detail||'')+').':'The room could not be reached.';
+ setErr(m);$('comp').hidden=true;
+ var a=$('acts');a.hidden=false;a.innerHTML='<button class="cta" id="again2" style="flex:1">Ask the room again</button>';
+ $('again2').addEventListener('click',function(){setErr('');a.innerHTML='<button class="ghost" id="walkaway2">'+esc(G.ch.leave||'Leave')+'</button>';fn()});
+}
+function groupReviewPrompt(){
+ var gp=G.grp,g=gp.cfg,how=G.ch.ai.how[G.end]||G.end,pn=G.panel,rt='(no ratings)';
+ if(pn&&pn.kind==='rounds')rt=pn.rounds.map(function(r){return 'Round '+(r.round+1)+' with '+r.name+' ('+(r.won?'won':'lost')+'): '+r.res.ratings.map(function(x){return x.name+' '+x.verdict+' ('+x.score+')'+(x.reason?' "'+x.reason+'"':'')}).join('; ')}).join('\n');
+ else if(pn)rt=pn.res.ratings.map(function(x){return x.name+' ('+x.role+'): '+x.verdict+', '+x.score+'/100'+(x.reason?' - "'+x.reason+'"':'')}).join('\n');
+ return 'You are the hidden judge of a social simulation game, writing feedback for a player after '+G.ch.ai.review+'. The goal was: '+G.ch.goal+' The player is a '+G.me+'. Ending: '+G.end+' ('+how+').\n\nTRANSCRIPT:\n'+ReachGroup.transcript(gp.gh,12000)+'\n\nHOW EACH PERSON IN THE ROOM RATED THE PLAYER (independent private votes on: '+(g.rubric||'')+'):\n'+rt+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a win but the player stayed respectful and handled it well. Otherwise "failed". Be specific and fair. Quote the player\'s real words. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{'+skillSchema()+'},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string}],"herView":string (1-2 sentences about how the room as a whole saw it),"tryNext":string (one concrete thing to try next time)}';
+}
+function panelHtml(){
+ var pn=G.panel,row=function(x){return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)"><b style="min-width:92px">'+esc(x.name)+'</b><span style="min-width:44px;color:'+(x.verdict==='yes'?'var(--amber)':'var(--mute)')+'">'+(x.verdict==='yes'?'Yes':'No')+' · '+x.score+'</span><span style="color:var(--mute);font-size:13px">'+esc(x.reason||'')+'</span></div>'};
+ if(pn.kind==='rounds')return '<div class="box"><h3>Round by round</h3>'+pn.rounds.map(function(r){return '<div style="margin-top:8px"><b>Round '+(r.round+1)+' · '+esc(r.name)+'</b> · '+(r.won?'You won':'You lost')+' ('+r.res.yes+'-'+r.res.no+')'+r.res.ratings.map(row).join('')+'</div>'}).join('')+'</div>';
+ return '<div class="box"><h3>How the room rated you · '+pn.res.yes+' of '+(pn.res.yes+pn.res.no)+' said yes</h3>'+pn.res.ratings.map(row).join('')+'</div>';
 }
 function updateTime(){var f=clamp(1-G.turn/G.maxT,0,1);$('timebar').style.width=(f*100)+'%'}
 function setErr(t){var e=$('err');if(t){e.hidden=false;e.textContent=t}else e.hidden=true}
@@ -318,6 +450,7 @@ async function send(){
  addMsg('me',txt);ta.value='';autoGrow();
  G.busy=true;$('send').disabled=true;$('msg').disabled=true;
  var tp=document.createElement('div');tp.className='typing';tp.innerHTML='<i></i><i></i><i></i>';$('log').appendChild(tp);scrollLog();
+ if(G.ch.group)return groupTurn(txt,tp,entry);
  var r;
  try{r=fixTurn(await callTurn())}
  catch(e){
@@ -384,7 +517,8 @@ function lis(a){return (a||[]).filter(function(x){return typeof x==='string'&&x}
 function renderReview(r){
  var lab={success:'Success',graceful:'Handled well',failed:'Not this time'}[r.outcome];
  var h='<div class="res '+r.outcome+'"><div class="k">'+lab+(typeof r.score==='number'?' · '+Math.max(0,Math.min(100,Math.round(r.score)))+'/100':'')+'</div><h1>'+esc(r.headline||lab)+'</h1><p>'+esc(r.summary||'')+'</p></div>';
- if(r.herView)h+='<div class="box"><h3>How '+esc(G.p.name)+' saw it</h3><p>'+esc(r.herView)+'</p></div>';
+ if(G.panel)h+=panelHtml();
+ if(r.herView)h+='<div class="box"><h3>'+(G.ch.group?'How the room saw it':'How '+esc(G.p.name)+' saw it')+'</h3><p>'+esc(r.herView)+'</p></div>';
  if(r.moment&&r.moment.quote)h+='<div class="box"><h3>The '+(r.moment.kind==='worst'?'turning point':'best moment')+'</h3><div class="moment"><span class="q">“'+esc(r.moment.quote)+'”</span>'+esc(r.moment.why||'')+'</div></div>';
  if(r.well&&r.well.length)h+='<div class="box"><h3>What worked</h3><ul>'+lis(r.well)+'</ul></div>';
  if(r.improve&&r.improve.length)h+='<div class="box"><h3>What to improve</h3><ul>'+lis(r.improve)+'</ul></div>';
@@ -394,7 +528,7 @@ function renderReview(r){
    return '<div class="sk"><small>'+K[k]+'</small><b class="'+c+'">'+n+'/10 <span style="font-weight:500;font-size:12px;opacity:.8">'+lbl+'</span></b></div>'}).join('')+'</div></div>'}
  if(r.rewrites&&r.rewrites.length)h+='<div class="box"><h3>What you could have said</h3>'+r.rewrites.filter(function(x){return x&&x.said&&x.better}).slice(0,3).map(function(x){return '<div class="moment"><span class="q">“'+esc(x.said)+'”</span>Try: “'+esc(x.better)+'”</div>'}).join('')+'</div>';
  if(r.tryNext)h+='<div class="box"><h3>Try this next time</h3><p>'+esc(r.tryNext)+'</p></div>';
- h+='<div class="note">Who they were: '+esc(G.p.arch.label)+', '+esc(G.p.name)+'. Replay and you will meet someone different.</div>';
+ if(!G.ch.group)h+='<div class="note">Who they were: '+esc(G.p.arch.label)+', '+esc(G.p.name)+'. Replay and you will meet someone different.</div>';
  h+='<div class="btns"><button class="cta" id="again">Replay this challenge</button><button class="ghost" id="tolist">All challenges</button></div>';
  $('rv').innerHTML=h;
  $('again').addEventListener('click',function(){openBrief(G.id)});
@@ -626,6 +760,7 @@ K.person=function(gp,sl){
  var h0=sl.h;if(G.ch&&G.ch.mode==='seated'&&!(W.S&&W.S.side)){h0=sl.h+(Math.random()<.5?1:-1)*(sl.seat?.35:1.3)}
  c.g.position.set(sl.x,sl.y,sl.z);c.g.rotation.y=h0;W.dyn.add(c.g);
  var tag=nameSprite(gp.name,false);tag.scale.set(1.15,.29,1);tag.position.set(0,2.35,0);tag.renderOrder=20;c.g.add(tag);
+ if(!W.girls.length)W.leadSlot=sl;
  W.girls.push({p:gp,c:c,base:V(sl.x,0,sl.z),h:h0,st:sl.st});return c;
 };
 function setupPlay(){
@@ -637,9 +772,10 @@ function setupPlay(){
  W.S=S;W.scene=S.built.scene;W.obst=S.built.obst;W.bounds={rx:S.rx,rz:S.rz};
  W.dyn=new THREE.Group();W.scene.add(W.dyn);
  W.dynObst=W.obst.length;
- W.npcs=[];W.exit=null;W.tgt=null;W.auto=null;W.orb=0;W.cyaw=Math.PI;W.face=false;W.speak=0;W.girls=[];W.meY=0;W.sel=-1;W.her=null;
+ W.npcs=[];W.exit=null;W.tgt=null;W.auto=null;W.orb=0;W.cyaw=Math.PI;W.face=false;W.speak=0;W.girls=[];W.meY=0;W.sel=-1;W.her=null;W.leadSlot=null;
  S.setup(K);
  selectGirl(0);W.herMode=W.herSt;
+ buildGroup();bindAgents();
  // mood ring + marker over the person (guide mode)
  var ring=new THREE.Mesh(new THREE.RingGeometry(.6,.78,36),new THREE.MeshBasicMaterial({color:0xffb454,transparent:true,opacity:.75,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(W.herBase.x,.04,W.herBase.z+.5);ring.visible=!!G.guide;W.dyn.add(ring);W.ring=ring;
  var mk=cn(W.dyn,.22,.5,0xffb454,W.herBase.x,2.9,W.herBase.z,MB(0xffb454));mk.rotation.z=Math.PI;mk.visible=!!G.guide;W.marker=mk;
@@ -790,7 +926,10 @@ function updNpcs(dt,t){
    var dx=tgt.x-c.g.position.x,dz=tgt.z-c.g.position.z,d=Math.sqrt(dx*dx+dz*dz);
    if(d<.25){n.wi++;n.pause=1.5+Math.random()*3;pose(c,'idle',dt,0,t);return}
    var s=1.1*dt;c.g.position.x+=dx/d*s;c.g.position.z+=dz/d*s;c.g.rotation.y+=wrapA(Math.atan2(dx,dz)-c.g.rotation.y)*Math.min(1,dt*6);pose(c,'walk',dt,s,t);
-  }else pose(n.c,n.st,dt,0,t+n.t0);
+  }else{
+   if(n.speak>0){n.speak-=dt;pose(n.c,'talk',dt,0,t+n.t0);n.c.look=V(W.mePos.x,1.7,W.mePos.z)}else{if(n.agent)n.c.look=null;pose(n.c,n.st,dt,0,t+n.t0)}
+   if(n.tag)n.tag.visible=n.speak>0;
+  }
  });
 }
 function updCam(dt){

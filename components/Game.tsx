@@ -9,7 +9,7 @@ import { MARKUP } from "./markup";
  * Three.js is loaded first, then the game script.
  */
 // Order matters: Three.js, model loaders, AI client, character models, then the game.
-const SCRIPTS = ["/vendor/three.min.js", "/vendor/GLTFLoader.js", "/vendor/SkeletonUtils.js", "/game/ai.js", "/game/people.js", "/game/avatar.js", "/game/cast.js", "/game/challenges.js", "/game/game.js"];
+const SCRIPTS = ["/vendor/three.min.js", "/vendor/GLTFLoader.js", "/vendor/SkeletonUtils.js", "/game/ai.js", "/game/people.js", "/game/avatar.js", "/game/cast.js", "/game/challenges.js", "/game/group.js", "/game/game.js"];
 
 // Never re-rendered, so React cannot replace the DOM nodes game.js has already bound to.
 const Screens = memo(function Screens() {
