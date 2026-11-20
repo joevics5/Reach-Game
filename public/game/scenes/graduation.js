@@ -30,5 +30,5 @@ function setup(){
  var g=[];for(var r=0;r<3;r++)for(var c=-4;c<=4;c++)if(Math.random()<.7)g.push([c*1.05,2+r*1.3,Math.PI,1,r]);
  guests(g);
 }
-K.scenes.reg("graduation",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(-1.2,-5.2,6,2.2,1.5),talkLimitZ:-2});
+K.scenes.reg("graduation",{start:{x:6.6,z:7,h:Math.PI},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(-1.2,-5.2,6,2.2,1.5),talkLimitZ:-2});
 })();

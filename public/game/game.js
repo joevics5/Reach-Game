@@ -16,8 +16,8 @@ function saveP(){try{localStorage.setItem(LSK,JSON.stringify(P))}catch(e){}}
 var CH=window.ReachChallenges.list,CATS=window.ReachChallenges.cats;
 
 /* ---------- characters ---------- */
-var NAMES={woman:['Amara','Chloe','Priya','Sofia','Maya','Nia','Elena','Hannah','Zoe','Imani','Lucy','Aisha','Camila','Yuki','Fatima','Grace'],man:['Daniel','Marcus','Kofi','Liam','Ravi','Mateo','Ethan','Tobi','Sam','Noah','Jamal','Leo','Hiro','Omar','Adrian','Felix']};
-var SKIN=[0x8D5A3B,0x6B4128,0xA9704A,0x4A2C1A,0xC68A5E,0xE0B48C,0xF0CDA8,0x5B3A22];
+var NAMES={woman:['Chloe','Priya','Sofia','Maya','Mei','Elena','Hannah','Zoe','Ingrid','Lucy','Camila','Yuki','Fatima','Grace','Nadia','Leila'],man:['Daniel','Marcus','Liam','Ravi','Mateo','Ethan','Lars','Sam','Noah','Chen','Leo','Hiro','Omar','Adrian','Felix','Andre']};
+var SKIN=[0xF3D2B8,0xE8BE98,0xD9A87C,0xC68A5E,0xA9704A,0x8D5A3B,0x6B4128,0x4A2C1A];
 var HAIRC=[0x15100d,0x1b1210,0x2a1a10,0x0d0d0d,0x5a3a22,0x8a5a2b,0x3b2a1a];
 var TOPC=[0xE74C3C,0x3498DB,0xF1C40F,0x2ECC71,0xECF0F1,0x9B59B6,0xE67E22,0x1ABC9C,0xFF6FB5,0x34495E,0x2f6f4f,0xb03060];
 var BOTC=[0x2C3E50,0x34495E,0x1B1B1B,0x7F8C8D,0x3E5C76,0x5C4033];
@@ -146,7 +146,7 @@ function show(name){
  ['dash','list','brief','play','review','settings'].forEach(function(s){$('s-'+s).hidden=(s!==name)});
  var b=$('back');b.hidden=(name==='dash'||name==='review'||(name==='play'&&G.status==='talk'));
  $('gear').hidden=(name==='play'||name==='settings');
- if(name==='play'){startRender();resize()}else stopRender();
+ if(name==='play'&&!(G.ch&&G.ch.mode==='chat')){startRender();resize()}else stopRender();
  window.scrollTo(0,0);
 }
 $('back').addEventListener('click',function(){
@@ -201,7 +201,7 @@ function openList(cat){
 function openBrief(id){
  G.id=id;var x=CH[G.cat][id-1];if(x.persona)G.target=x.persona.gender;
  var hasAI=!!SAMPLE;
- $('brief').innerHTML='<div><div class="eyebrow">'+CATS[G.cat].name+' / '+('0'+id).slice(-2)+'</div><h1>'+esc(x.t)+'</h1></div>'+
+ $('brief').innerHTML='<button class="ghost" id="bk" style="align-self:flex-start">\u2039 Back to '+esc(CATS[G.cat].name)+'</button>'+'<div><div class="eyebrow">'+CATS[G.cat].name+' / '+('0'+id).slice(-2)+'</div><h1>'+esc(x.t)+'</h1></div>'+
  '<div class="box"><h3>The situation</h3><p>'+esc(x.situation||x.goal)+'</p></div>'+
  '<div class="box"><h3>Your goal</h3><p>'+esc(x.goal)+' You get there by talking. Nobody will tell you what to say.</p></div>'+
  '<div class="box"><h3>You are</h3><div class="seg" id="sg-me"><button data-v="man">A man</button><button data-v="woman">A woman</button></div>'+(x.persona?'</div>':'<h3 style="margin-top:12px">'+(x.mode==='seated'?'You are meeting':'You are approaching')+'</h3><div class="seg" id="sg-t"><button data-v="woman">A woman</button><button data-v="man">A man</button></div><p class="note" style="margin-top:8px">Their personality, reactions and way of talking change with who you pick. Each attempt is a different person in a different mood.</p></div>')+
@@ -213,6 +213,7 @@ function openBrief(id){
  function seg(id,key){var el=$(id);if(!el)return;el.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(G[key]===b.dataset.v));b.addEventListener('click',function(){G[key]=b.dataset.v;el.querySelectorAll('button').forEach(function(q){q.setAttribute('aria-pressed',String(G[key]===q.dataset.v))})})})}
  seg('sg-me','me');seg('sg-t','target');
  G.guide=false;$('sw').addEventListener('click',function(){G.guide=!G.guide;this.setAttribute('aria-checked',String(G.guide))});
+ $('bk').addEventListener('click',function(){openList(G.cat)});
  $('adult').checked=!!P.adult;
  $('go').addEventListener('click',function(){if(!$('adult').checked){$('adult').focus();$('go').textContent='Tick the 18+ box to continue';setTimeout(function(){$('go').textContent=x.go||'Start'},1800);return}P.adult=true;saveP();startChallenge()});
  show('brief');
@@ -246,13 +247,24 @@ async function startChallenge(){
  var gb=$('gbadge');gb.className='badge'+(G.guide?' on':'');gb.textContent=G.guide?'Guide Mode on (locked)':'Guide Mode off (locked)';
  var coach=G.guide&&ch.mode==='approach'?'<br><br><b style="color:var(--amber)">Coach:</b> Take a moment first. Notice what '+who+' is doing and where you can approach without startling '+who+'. A low-pressure opener beats a clever one.':'';
  G.pre='<div class="pre"><b>'+esc(fillT(ch.pre,p).split('. ')[0])+'.</b> '+esc(fillT(ch.pre,p).split('. ').slice(1).join('. '))+coach+'</div>';
- $('log').innerHTML=G.pre;
- var t=$('tip');t.style.opacity=ch.mode==='approach'?1:0;setTimeout(function(){t.style.opacity=0},7000);
+ G.pre2=G.pre;
+ var pl=$('s-play');pl.classList.toggle('phonemode',ch.mode==='chat');
+ if(ch.mode==='chat'){$('pgoal').innerHTML='<b>Goal:</b> '+esc(ch.goal);$('pgoal').hidden=false;show('play');beginChat();return}
+ $('pgoal').hidden=true;
+ if(ch.mode==='seated'){G.pre='<div class="pre"><b>Find '+esc(p.name)+'.</b> '+esc(ch.walk||'Walk over to '+(p.gender==='woman'?'her':'him')+' and tap Talk when you are close.')+coach+'</div>';$('log').innerHTML=G.pre}else $('log').innerHTML=G.pre;
+ var t=$('tip');t.style.opacity=1;setTimeout(function(){t.style.opacity=0},7000);
  var ok=await loadScene(ch.scene);
  if(!ok){$('log').innerHTML='<div class="pre">This scene could not load. Check your connection and try again.</div>';return}
  show('play');
  setupPlay();
- if(ch.mode==='seated')beginSeated();
+}
+function beginChat(){
+ var ch=G.ch;G.status='talk';$('back').hidden=true;G.rules=rules(G.p,G.me,G.guide,'');
+ $('chname').innerHTML='<span class="av">'+esc(G.p.name.charAt(0))+'</span>'+esc(G.p.name);$('chsub').textContent=ch.chat.who||'';
+ $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
+ $('log').innerHTML=G.pre2;cueLine(sceneCue());
+ if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(ch.hint||'Listen to the answers and build on them.')}
+ setTimeout(function(){try{$('msg').focus({preventScroll:true})}catch(e){}},50);
 }
 function beginSeated(){
  var ch=G.ch;G.status='talk';$('back').hidden=true;
@@ -271,16 +283,16 @@ function beginTalk(){
  G.status='approaching';$('talk').classList.remove('on');
  G.hist=[];G.notes=[];G.turn=0;G.cur={interest:G.p.interest,comfort:G.p.comfort,patience:G.p.patience};
  W.herSt=W.girls[W.sel].st;W.herMode=W.herSt;
- var dir=approachDir();G.approach=dir==='front'?'from the front':dir==='behind'?'from behind her or his back':'from the side';
- G.rules=rules(G.p,G.me,G.guide,approachLine(G.p,dir));
+ var dir=approachDir(),seatedCh=G.ch.mode==='seated';G.approach=seatedCh?'':dir==='front'?'from the front':dir==='behind'?'from behind her or his back':'from the side';
+ G.rules=rules(G.p,G.me,G.guide,seatedCh?'':approachLine(G.p,dir));
  walkToTalk(function(){
   G.status='talk';$('back').hidden=true;
   $('chname').textContent=G.p.name;$('chsub').textContent=G.p.arch.label.replace('The ','')+(G.p.circ?'':'');
   $('chsub').textContent=G.ch.chat.who||'';
   $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
-  $('log').innerHTML='';
+  $('log').innerHTML=seatedCh?G.pre2:'';
   cueLine(sceneCue());
-  if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(openHint(dir))}
+  if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(seatedCh?(G.ch.hint||'Listen to the answers and build on them.'):openHint(dir))}
   $('msg').focus({preventScroll:true});
  });
 }
@@ -343,8 +355,8 @@ function finishChat(end){
 $('walkaway').addEventListener('click',function(){
  if(G.status!=='talk'||G.busy)return;
  cancelMic();
- if(G.turn===0){cueLine(G.ch.mode==='seated'?'You excuse yourself and leave the table.':'You nod, smile and head back into the room.');G.end='player_left';G.status='ended';herEnds('declined');}
- else{cueLine(G.ch.mode==='seated'?'You thank '+G.p.name+' and say goodnight.':'You thank '+G.p.name+' for the chat and step away.');G.end='player_left';G.status='ended';herEnds('declined')}
+ if(G.turn===0){cueLine(G.ch.mode==='chat'?'You put the phone down.':G.ch.mode==='seated'?'You excuse yourself and step away.':'You nod, smile and head back into the room.');G.end='player_left';G.status='ended';herEnds('declined');}
+ else{cueLine(G.ch.mode==='chat'?'You say goodnight and put the phone down.':G.ch.mode==='seated'?'You thank '+G.p.name+' and say goodbye.':'You thank '+G.p.name+' for the chat and step away.');G.end='player_left';G.status='ended';herEnds('declined')}
  $('comp').hidden=true;$('hint').hidden=true;
  var a=$('acts');a.hidden=false;a.innerHTML='<button class="cta" id="see" style="flex:1">See how it went</button>';
  $('see').addEventListener('click',doReview);
@@ -603,15 +615,18 @@ function nameSprite(txt,you){
 /* kit handed to scene files */
 K.bx=bx;K.cy=cy;K.cn=cn;K.sp=sp;K.el=el;K.mesh=mesh;K.M=M;K.MB=MB;K.V=V;K.tex=tex;K.haloTex=haloTex;K.makeChar=makeChar;K.randLook=randLook;K.pk=pk;K.shuffle=shuffle;K.clamp=clamp;K.pose=pose;K.nameSprite=nameSprite;window.ReachKit=K;
 K.player=function(x,z,h,y){
+ var seatedMode=G.ch&&G.ch.mode==='seated';W.spot=null;
+ if(seatedMode){var st0=W.S.start||{x:0,z:W.S.rz-1.1,h:Math.PI};W.spot={x:x,z:z,h:h,y:y||0};x=st0.x;z=st0.z;h=st0.h;y=0}
  var meLook=randLook(G.me==='woman');meLook.sh=0xF7B500;meLook.pn=0x1b3a5c;meLook.dress=false;meLook.top='tee';meLook.bottom='jeans';meLook.style=G.me==='woman'?'long':'short';meLook.beard=false;meLook.glasses=false;
  meLook.lod='hi';W.me=makeChar(meLook);W.meY=y||0;W.me.seat=!!y;W.me.g.position.set(x,W.meY,z);W.me.g.rotation.y=h;W.dyn.add(W.me.g);W.mePos=V(x,0,z);W.meH=h;
  var nm=nameSprite('You',true);nm.scale.set(1.2,.3,1);nm.position.set(0,2.3,0);nm.renderOrder=20;W.me.g.add(nm);return W.me;
 };
 K.person=function(gp,sl){
  gp.look.lod='hi';var c=makeChar(gp.look);c.seat=!!sl.seat;c.moodT=.1;
- c.g.position.set(sl.x,sl.y,sl.z);c.g.rotation.y=sl.h;W.dyn.add(c.g);
+ var h0=sl.h;if(G.ch&&G.ch.mode==='seated'&&!(W.S&&W.S.side)){h0=sl.h+(Math.random()<.5?1:-1)*(sl.seat?.35:1.3)}
+ c.g.position.set(sl.x,sl.y,sl.z);c.g.rotation.y=h0;W.dyn.add(c.g);
  var tag=nameSprite(gp.name,false);tag.scale.set(1.15,.29,1);tag.position.set(0,2.35,0);tag.renderOrder=20;c.g.add(tag);
- W.girls.push({p:gp,c:c,base:V(sl.x,0,sl.z),h:sl.h,st:sl.st});return c;
+ W.girls.push({p:gp,c:c,base:V(sl.x,0,sl.z),h:h0,st:sl.st});return c;
 };
 function setupPlay(){
  if(!W.on)return;
@@ -640,6 +655,7 @@ function approachDir(){
  return d>.35?'front':d<-.35?'behind':'side';
 }
 function walkToTalk(cb){
+ if(W.spot){var sp0=W.spot;W.auto={x:sp0.x,z:sp0.z,cb:function(){W.meY=sp0.y;W.me.seat=!!sp0.y;W.mePos.set(sp0.x,0,sp0.z);W.meH=sp0.h;W.face=true;cb()}};W.tgt=null;return}
  var v=V(W.mePos.x-W.herBase.x,0,W.mePos.z-W.herBase.z);v.y=0;if(v.length()<.01)v.set(0,0,1);v.normalize();
  var t=V(W.herBase.x+v.x*1.3,0,W.herBase.z+v.z*1.3);var lim=W.S&&W.S.talkLimitZ;if(lim!=null&&t.z<lim)t.z=lim;
  W.auto={x:t.x,z:t.z,cb:function(){W.face=true;cb()}};W.tgt=null;
@@ -722,7 +738,7 @@ function updMe(dt,t){
   pos.copy(np);
   var th=Math.atan2(dir.x,dir.z);W.meH+=wrapA(th-W.meH)*Math.min(1,dt*10);
  }
- if(W.face||G.status==='talk'||G.status==='ended'){var fh=Math.atan2(W.herBase.x-pos.x,W.herBase.z-pos.z);if(!dir)W.meH+=wrapA(fh-W.meH)*Math.min(1,dt*7)}
+ if(W.face||G.status==='talk'||G.status==='ended'){var fh=(W.S&&W.S.side&&W.spot)?W.spot.h:Math.atan2(W.herBase.x-pos.x,W.herBase.z-pos.z);if(!dir)W.meH+=wrapA(fh-W.meH)*Math.min(1,dt*7)}
  me.g.position.set(pos.x,W.meY||0,pos.z);me.g.rotation.y=W.meH;
  var st=moved>.002?'walk':(G.status==='talk'&&W.speak<=0&&G.busy===false?'talk':'idle');
  if(G.status==='talk'&&G.busy)st='idle';
@@ -750,7 +766,7 @@ function updHer(dt,t){
  h.look=V(W.mePos.x,1.72,W.mePos.z);
  // turn to player
  var fh=Math.atan2(W.mePos.x-W.herBase.x,W.mePos.z-W.herBase.z);
- h.g.rotation.y+=wrapA(fh-h.g.rotation.y)*Math.min(1,dt*3.5);
+ if(!(W.S&&W.S.side))h.g.rotation.y+=wrapA(fh-h.g.rotation.y)*Math.min(1,dt*3.5);
  pose(h,W.speak>0||W.herMode==='talk'?'talk':'idle',dt,0,t);
  if(W.ring){W.ring.visible=!!G.guide&&G.status!=='ended'||(G.guide&&G.status==='ended')}
 }

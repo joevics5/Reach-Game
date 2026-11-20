@@ -59,3 +59,11 @@ three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast
 - The Last Bus (scene `busstop`, uses `BUS_AI`, same target-picker flow as The Date; win needs a day AND a time) and Table for More (scene `cafe`, fixed persona Jade voicing three friends, `work()` ai with its own skills). Rizz now has 4 playable; Coffee by Text still needs a chat-only UI (no 3D scene).
 - Untested with a real Gemini key.
 - Coffee by Text (scene `phonechat`, `TEXT_AI`): no chat-only mode was added. The scene is a living room with the group chat on a wall screen and the contact standing on a lit plinth, so the standard seated engine works unchanged. All 25 starter challenges are now playable. A true chat-only mode (no 3D) would be an engine change if ever wanted.
+
+## Walk-in flow, chat mode, global cast (Nov 2026 revision)
+- ALL scenes are walk-in: `mode:'seated'` challenges start the player at the entrance (`scene.start` or (0, rz-1.1)), the person is placed with a pre-talk heading that does NOT face the player, and tapping Talk auto-walks to the seat/spot given in `setup()` via `K.player(x,z,h,y)` (that call now just records `W.spot`). Scenes whose start collides with obstacles need a `start:{x,z,h}` in `reg()` (stadium, graduation, debate do).
+- `side:true` in `reg()` = people sit/stand side by side facing forward (stadium, park, bus stop): bodies do not pivot to face each other, only heads turn.
+- `mode:'chat'` (Coffee by Text) = no 3D at all: `#s-play.phonemode` shows only a phone-styled chat; goal in `#pgoal`.
+- Goals/titles/places of the 25 challenges are the user's wording and must not be reworded (Cafeteria = "School cafeteria ... name and class"; Table for More = "Restaurant").
+- Names are global (no region-specific cluster) and skin tones in `cast.js` SK run fair to deep, spread evenly across the 30. Keep both when adding characters.
+- Brief page has an explicit "Back to <category>" button.

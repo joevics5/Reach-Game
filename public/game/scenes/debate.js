@@ -27,5 +27,5 @@ function setup(){
  [-1,0,1].forEach(function(x,i){g.push([x,-RZ+1.9,0,1,i])});
  guests(g);
 }
-K.scenes.reg("debate",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,0,3.8,1.7,1.35),talkLimitZ:-2});
+K.scenes.reg("debate",{start:{x:4.9,z:4.6,h:Math.PI},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,0,3.8,1.7,1.35),talkLimitZ:-2});
 })();

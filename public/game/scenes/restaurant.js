@@ -64,7 +64,7 @@ function setup(){
  // other diners (lower detail), seated at the other tables
  function diners(x,z,n,w){for(var i=0;i<n;i++){var a=i/n*Math.PI*2,c=makeChar(randLook(w!==undefined?w:Math.random()<.5));c.seat=true;c.g.position.set(x+Math.cos(a)*.95,-.45,z+Math.sin(a)*.95);
    c.g.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a));W.dyn.add(c.g);W.npcs.push({c:c,st:pk(['talk','drink','talk']),t0:Math.random()*10})}}
- diners(4.5,-2,2);diners(-5.5,2.8,2);diners(3,3.4,3);diners(5.6,-4.6,2);diners(-1.2,2.4,2);
+ diners(4.5,-2,2);diners(-5.8,-4.6,2);diners(-0.4,-5.2,2);diners(-5.5,2.8,2);diners(3,3.4,3);diners(5.6,-4.6,2);diners(-1.2,2.4,2);
  // a waiter with a route between tables
  var wt=makeChar(randLook(Math.random()<.5));wt.g.position.set(1.5,0,0);W.dyn.add(wt.g);
  W.npcs.push({c:wt,wander:true,wp:[V(1.5,0,-0.6),V(6,0,1),V(2,0,5),V(-2,0,5),V(-3.4,0,0.8),V(2.6,0,-3.2)],wi:0,pause:1,t0:0});

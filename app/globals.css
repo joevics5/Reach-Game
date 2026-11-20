@@ -154,3 +154,15 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .fld:focus{outline:none;border-color:var(--amber)}
 .lbl{display:block;font-size:13px;color:var(--mute);margin-top:12px}
 .chk{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--mute)}
+
+/* chat-only (phone) challenges */
+.pgoal{padding:8px 14px;font-size:12.5px;border-bottom:1px solid var(--line);color:var(--ink)}
+.pgoal b{color:var(--amber)}
+.av{display:inline-grid;place-items:center;width:30px;height:30px;margin-right:9px;border-radius:50%;background:var(--amber);color:var(--amber-ink);font:800 14px var(--f-display);vertical-align:middle}
+#s-play.phonemode .stage{display:none}
+#s-play.phonemode .play{grid-template-columns:1fr;justify-items:center}
+#s-play.phonemode .chat{width:min(430px,100%);height:min(80vh,720px);max-height:none;border:7px solid #1d1726;border-radius:38px;box-shadow:0 14px 40px rgba(0,0,0,.5);overflow:hidden;background:#0f0c15}
+#s-play.phonemode .ch-h{padding-top:14px}
+#s-play.phonemode .m.me{background:#2a7ad8;color:#fff}
+#s-play.phonemode .m.her{background:#2a2f3a;color:#f2f2f6}
+#s-play.phonemode .m.cue{font-size:12px}

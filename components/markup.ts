@@ -39,6 +39,7 @@ export const MARKUP = `<div class="app">
       </div>
       <div class="chat" id="chat">
         <div class="ch-h"><div><b id="chname">The bar</b><div class="sub" id="chsub"></div></div><div class="time" id="timebox" hidden><small>Time</small><div class="prog"><i id="timebar"></i></div></div></div>
+        <div class="pgoal" id="pgoal" hidden></div>
         <div class="log" id="log"></div>
         <div class="hint" id="hint" hidden></div>
         <div class="err" id="err" hidden></div>
