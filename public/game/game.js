@@ -313,7 +313,8 @@ function openHint(dir){
 function buildGroup(){
  var g=G.ch&&G.ch.group;G.grp=null;G.panel=null;if(!g)return;
  var lead={id:'lead',name:G.p.name,gender:G.p.gender,age:G.p.age,job:G.p.job,role:g.leadRole||'',who:g.leadWho||'',talks:true,rates:g.leadRates!==false,lead:true};
- G.grp={cfg:g,lead:lead,agents:[lead],gh:[],roundsWon:0,roundLog:[]};
+ G.grp={cfg:g,lead:lead,agents:[lead],gh:[],roundsWon:0,roundLog:[],ph:{phase:'intro',queue:[],stage:'q',cur:null}};
+ if(g.flow){var nt=(g.agents||[]).filter(function(a){return a.talks!==false}).length;G.maxT=2+nt*2}
 }
 function sexOf(n){return n.c.spec&&n.c.spec.sex==='f'?'woman':'man'}
 /* Gives the named agents and the audience a body: they take over people the scene already placed. */
@@ -348,7 +349,9 @@ function showOuts(outs){
 function typingOn(){var tp=document.createElement('div');tp.className='typing';tp.innerHTML='<i></i><i></i><i></i>';$('log').appendChild(tp);scrollLog();return tp}
 function inputOn(on){G.busy=!on;$('send').disabled=!on;$('msg').disabled=!on;if(on)try{$('msg').focus({preventScroll:true})}catch(e){}}
 async function groupStart(){
- var gp=G.grp,g=gp.cfg;if(!g.open)return;
+ var gp=G.grp,g=gp.cfg;
+ if(g.flow){cueLine(g.flow.introCue||'Round 1: introduce yourself. Take your time.');$('msg').placeholder=g.flow.introPlaceholder||'Introduce yourself...';return}
+ if(!g.open)return;
  inputOn(false);var tp=typingOn();
  try{var r=await ReachGroup.speak(gctx(0),gp.lead,'open');tp.remove();gp.gh.push({who:gp.lead.name,role:gp.lead.role,text:r.say,cue:r.cue});showOuts([{a:gp.lead,r:r}])}
  catch(e){tp.remove();setErr('The first reply did not come through. You can start speaking anyway.')}
@@ -356,6 +359,7 @@ async function groupStart(){
 }
 async function groupTurn(txt,tp,entry){
  var gp=G.grp,g=gp.cfg,T=G.maxT,len0=gp.gh.length;
+ if(g.flow)return flowTurn(txt,tp);
  gp.gh.push({who:'player',text:txt});
  var pl=ReachGroup.plan(g,gp,G.turn,T),ctx=gctx(pl.round),outs=[];
  try{
@@ -375,6 +379,55 @@ async function groupTurn(txt,tp,entry){
  if(outs.some(function(o){return o.r.end==='left'})){G.busy=false;return finishChat('left')}
  if(pl.endRound){return groupRoundEnd(pl)}
  if(pl.finish&&g.speak!=='rounds'){return groupFinish()}
+ inputOn(true);
+}
+
+/* ---------- structured flow: intro -> each panelist asks one question + one follow-up (random order, may forfeit) -> optional closing -> vote ---------- */
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function flowInput(ph,text){$('msg').placeholder=text||''}
+async function flowTurn(txt,tp){
+ var gp=G.grp,g=gp.cfg,F=g.flow,ph=gp.ph;
+ gp.gh.push({who:'player',text:txt});updateTime();
+ G.notes.push({u:txt,say:'',cue:'',tag:'other',quality:'ok',note:ph.phase});
+ if(ph.phase==='intro'){
+  tp.remove();ph.queue=shuf(gp.agents.filter(function(a){return a.talks&&!a.lead}));ph.phase='ask';ph.stage='q';
+  cueLine(F.askCue||'Questions: each panelist may ask one question and one follow-up.');
+  return flowNext(null);
+ }
+ if(ph.phase==='ask'){
+  if(ph.stage==='q'){ph.stage='f';return flowAsk(tp,ph.cur,'followup')}
+  tp.remove();return flowNext(null);
+ }
+ if(ph.phase==='close'){tp.remove();$('skipcl')&&$('skipcl').remove();return groupFinish()}
+}
+async function flowNext(tp){
+ var gp=G.grp,F=gp.cfg.flow,ph=gp.ph;
+ if(!ph.queue.length){
+  ph.phase='close';ph.cur=null;
+  if(F.closing===false)return groupFinish();
+  cueLine(F.closeCue||'Closing: you may add a short final word, or skip.');flowInput(0,F.closePlaceholder||'A short closing word (optional)...');
+  var b=document.createElement('button');b.id='skipcl';b.className='cta';b.textContent='Skip closing';b.style.flex='1';
+  $('acts').hidden=false;$('acts').insertBefore(b,$('acts').firstChild);
+  b.addEventListener('click',function(){if(G.busy)return;b.remove();G.busy=true;groupFinish()});
+  inputOn(true);return;
+ }
+ ph.cur=ph.queue.shift();ph.stage='q';
+ return flowAsk(tp||typingOn(),ph.cur,'question');
+}
+async function flowAsk(tp,a,kind){
+ var gp=G.grp,ph=gp.ph,ctx=gctx(0),r;
+ try{r=await ReachGroup.speak(ctx,a,kind)}
+ catch(e){tp.remove();if(kind==='question')ph.queue.unshift(a);return groupRetry(function(){inputOn(false);return kind==='question'?flowNext(null):flowAsk(typingOn(),a,'followup')},e)}
+ tp.remove();
+ if(r.forfeit){
+  gp.gh.push({who:'note',text:a.name+(kind==='question'?' passed on asking a question.':' had no follow-up.')});
+  cueLine(a.name+(kind==='question'?' has no question.':' has no follow-up.'));
+  if(a.npc)a.npc.speak=0;
+  if(kind==='question')return flowNext(null);   // a forfeit skips the follow-up too
+  return flowNext(null);
+ }
+ gp.gh.push({who:a.name,role:a.role,text:r.say,cue:r.cue});showOuts([{a:a,r:r}]);
+ flowInput(0,(kind==='question'?'Answer '+a.name+'...':'Answer the follow-up...'));
  inputOn(true);
 }
 /* Debate and club: after each round the round's raters vote, then the next opponent steps up. */
@@ -415,8 +468,8 @@ async function groupFinish(){
  catch(e){tp.remove();return groupRetry(groupFinish,e)}
  tp.remove();
  var won=ReachGroup.decide(g.rule,res);
- G.panel={kind:'room',res:res,rule:g.rule,rubric:g.rubric,total:raters.length};
- cueLine(res.yes+' of '+(res.yes+res.no)+' said yes'+(res.absent?' ('+res.absent+' could not be reached)':'')+'.');
+ G.panel={kind:'room',res:res,rule:g.rule,rubric:g.rubric,total:raters.length,labels:g.labels};
+ cueLine(res.yes+' of '+(res.yes+res.no)+' said '+(g.labels&&g.labels.yes?g.labels.yes.toLowerCase():'yes')+(res.absent?' ('+res.absent+' could not be reached)':'')+'.');
  G.busy=false;finishChat(won?'won':'declined');
 }
 /* A rating call failed (rate limit, no answer): keep the conversation and offer to ask again. */
@@ -433,9 +486,9 @@ function groupReviewPrompt(){
  return 'You are the hidden judge of a social simulation game, writing feedback for a player after '+G.ch.ai.review+'. The goal was: '+G.ch.goal+' The player is a '+G.me+'. Ending: '+G.end+' ('+how+').\n\nTRANSCRIPT:\n'+ReachGroup.transcript(gp.gh,12000)+'\n\nHOW EACH PERSON IN THE ROOM RATED THE PLAYER (independent private votes on: '+(g.rubric||'')+'):\n'+rt+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a win but the player stayed respectful and handled it well. Otherwise "failed". Be specific and fair. Quote the player\'s real words. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{'+skillSchema()+'},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string}],"herView":string (1-2 sentences about how the room as a whole saw it),"tryNext":string (one concrete thing to try next time)}';
 }
 function panelHtml(){
- var pn=G.panel,row=function(x){return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)"><b style="min-width:92px">'+esc(x.name)+'</b><span style="min-width:44px;color:'+(x.verdict==='yes'?'var(--amber)':'var(--mute)')+'">'+(x.verdict==='yes'?'Yes':'No')+' · '+x.score+'</span><span style="color:var(--mute);font-size:13px">'+esc(x.reason||'')+'</span></div>'};
+ var pn=G.panel,L=pn.labels||{},row=function(x){return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)"><b style="min-width:92px">'+esc(x.name)+'</b><span style="min-width:44px;color:'+(x.verdict==='yes'?'var(--amber)':'var(--mute)')+'">'+(x.verdict==='yes'?(L.yes||'Yes'):(L.no||'No'))+' · '+x.score+(L.yes?'%':'')+'</span><span style="color:var(--mute);font-size:13px">'+esc(x.reason||'')+'</span></div>'};
  if(pn.kind==='rounds')return '<div class="box"><h3>Round by round</h3>'+pn.rounds.map(function(r){return '<div style="margin-top:8px"><b>Round '+(r.round+1)+' · '+esc(r.name)+'</b> · '+(r.won?'You won':'You lost')+' ('+r.res.yes+'-'+r.res.no+')'+r.res.ratings.map(row).join('')+'</div>'}).join('')+'</div>';
- return '<div class="box"><h3>How the room rated you · '+pn.res.yes+' of '+(pn.res.yes+pn.res.no)+' said yes</h3>'+pn.res.ratings.map(row).join('')+'</div>';
+ return '<div class="box"><h3>How the room rated you · '+pn.res.yes+' of '+(pn.res.yes+pn.res.no)+' said '+(L.yes?L.yes.toLowerCase():'yes')+'</h3>'+pn.res.ratings.map(row).join('')+'</div>';
 }
 function updateTime(){var f=clamp(1-G.turn/G.maxT,0,1);$('timebar').style.width=(f*100)+'%'}
 function setErr(t){var e=$('err');if(t){e.hidden=false;e.textContent=t}else e.hidden=true}
