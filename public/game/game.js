@@ -453,14 +453,14 @@ async function flowAsk(tp,a,kind){
 async function groupRoundEnd(pl){
  var gp=G.grp,g=gp.cfg,R=g.rounds,ctx=gctx(pl.round);
  var raters=R.raters==='self'?[gp.lead]:gp.agents.filter(function(a){return !a.lead&&a.rates});
- var tp=typingOn();cueLine(R.raters==='self'?gp.lead.name+' thinks it over.':'The judges confer.');
+ var tp=typingOn();if(!R.hidden)cueLine(R.raters==='self'?gp.lead.name+' thinks it over.':'The judges confer.');
  var res;
  try{res=await ReachGroup.rate(ctx,raters,{deliberate:g.deliberate})}
  catch(e){tp.remove();return groupRetry(function(){return groupRoundEnd(pl)},e)}
  tp.remove();
  var won=ReachGroup.decide(R.rule||{type:'majority'},res);if(won)gp.roundsWon++;
  gp.roundLog.push({round:pl.round,name:gp.lead.name,res:res,won:won});
- cueLine(R.raters==='self'?(won?gp.lead.name+' says yes: they are joining.':gp.lead.name+' politely passes.'):'Round '+(pl.round+1)+': '+res.yes+' to '+res.no+' for you. '+(won?'You take the round.':'The round goes to '+gp.lead.name+'.'));
+ if(R.hidden)cueLine('Round '+(pl.round+1)+' of '+R.n+' is over.'+(pl.finish?'':' Thirty-second break.'));else cueLine(R.raters==='self'?(won?gp.lead.name+' says yes: they are joining.':gp.lead.name+' politely passes.'):'Round '+(pl.round+1)+': '+res.yes+' to '+res.no+' for you. '+(won?'You take the round.':'The round goes to '+gp.lead.name+'.'));
  if(pl.finish){
   G.panel={kind:'rounds',rounds:gp.roundLog,min:R.min,won:gp.roundsWon};
   var ok=gp.roundsWon>=R.min;cueLine((R.raters==='self'?'Joined: ':'Rounds won: ')+gp.roundsWon+' of '+R.n+'. You needed '+R.min+'.');

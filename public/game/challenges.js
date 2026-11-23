@@ -109,7 +109,7 @@ var D={
     chat:{name:'Messages',sub:'Friday evening. Typing...',who:'Private chat'},
     pre:'You open a private chat with {Name} from the group. Send the first message.',
     circs:['curled up on the sofa with a show on','getting ready to head out later','on the train home, scrolling','lying on the bed with the phone'],
-    hint:'Reply to what they actually said, keep messages short and playful, and when it is going well, suggest a specific coffee: day, time, place.',openCue:function(p){return p.name+' is online. Typing...'},timeoutCue:function(p){return p.name+' says goodnight: the phone goes quiet.'},cast:{n:8},go:'Open the chat',placeholder:'Message {her}',leave:'Put the phone down'})
+    hint:'Reply to what they actually said, keep messages short and playful, and when it is going well, suggest a specific coffee: day, time, place.',openCue:function(p){return p.name+' is online. Typing...'},timeoutCue:function(p){return p.name+' says goodnight: the phone goes quiet.'},cast:{n:10},go:'Open the chat',placeholder:'Message {her}',leave:'Put the phone down'})
  ],
  friends:[
   C("New Neighbour","Doorstep",1,"Knock with a basket of cookies and get them to tell you what they do for a living.",{scene:"doorstep",mode:'seated',picker:{me:true,target:false},maxT:8,skills:FRIEND_SK,ai:fr({
@@ -296,7 +296,7 @@ var D={
     hint:'Start with something specific and personal, not a cliché. One real story beats five general claims.',
     openCue:function(p){return 'Professor Hale folds his hands and gives you a small nod.'},timeoutCue:function(p){return 'The dean looks at the programme: the ceremony must move on.'},
     cast:{n:1},go:'Walk to the podium',placeholder:'Give your speech',leave:'Step away'}),
-  C('1 vs 5 Debate','Debate room',3,'Debate five opponents one at a time and win at least three of the five.',{scene:'debate',walkTitle:'Take your lectern',talkLabel:'Begin the debate',walk:'Walk to your lectern and tap Talk when you are ready to open.',group:{lead:true,speak:'rounds',open:true,scene:'A debate room. The player debates five opponents one at a time; judges at the table score each round.',leadRole:'opponent',rubric:'who won this round of the debate: the player (yes) or the opponent (no)',rateIntro:'You are a judge scoring one round of a debate.',deliberate:false,rounds:{n:5,perRound:3,min:3,rule:{type:'majority'},raters:'judges',opponents:[{name:'Adrian',gender:'man',age:40,job:'lawyer',who:'Precise and relentless.'},{name:'Zoe',gender:'woman',age:31,job:'journalist',who:'Quick and sarcastic.'},{name:'Felix',gender:'man',age:55,job:'professor',who:'Calm and academic.'},{name:'Camila',gender:'woman',age:34,job:'activist',who:'Passionate.'},{name:'Lars',gender:'man',age:47,job:'politician',who:'Slippery.'}]},audience:{n:3,talkers:0,role:'judge',rates:true,where:function(x,z){return z<-3}}},mode:'seated',picker:{me:true,target:false},maxT:15,skills:SPEAK_SK,ai:spk({
+  C('1 vs 5 Debate','Debate room',3,'Debate five opponents one at a time and win at least three of the five.',{scene:'debate',walkTitle:'Take your seat',talkLabel:'Sit and begin',walk:'Walk to the table and tap Talk to sit opposite your first opponent. The other four wait on the sofa.',group:{lead:true,speak:'rounds',open:true,scene:'A debate room. The player debates five opponents one at a time; judges at the table score each round.',leadRole:'opponent',rubric:'who won this round of the debate: the player (yes) or the opponent (no)',rateIntro:'You are a judge scoring one round of a debate.',deliberate:false,rounds:{n:5,perRound:3,min:3,rule:{type:'majority'},raters:'judges',hidden:true,opponents:[{name:'Adrian',gender:'man',age:40,job:'lawyer',who:'Precise and relentless.'},{name:'Zoe',gender:'woman',age:31,job:'journalist',who:'Quick and sarcastic.'},{name:'Felix',gender:'man',age:55,job:'professor',who:'Calm and academic.'},{name:'Camila',gender:'woman',age:34,job:'activist',who:'Passionate.'},{name:'Lars',gender:'man',age:47,job:'politician',who:'Slippery.'}]},audience:{n:3,talkers:0,role:'judge',rates:true,where:function(x,z){return z<-3}}},mode:'seated',picker:{me:true,target:false},maxT:15,skills:SPEAK_SK,ai:spk({
     who:'a series of five different debaters, one at a time, each taking the opposite side from the player in a formal debate. A moderator introduces each new opponent',
     scene:'SCENE: A formal debate room. The motion is "This house would ban homework in schools". The player is on the side FOR the ban and will face five opponents one after another, about three exchanges each. At the start of each round, introduce the new opponent by name in one short line (Opponent 1 of 5: Daniel, then Priya, then Marcus, then Elena, then Jordan) and have them argue against the player. Keep your usual character, but speak as the current opponent. Name the current opponent in every reply.',
     feel:"interest is how persuasive the player is currently being (0-100). comfort is how fair and respectful the debate is. patience is how many rounds remain in the player's favour; it falls when rounds are lost.",
@@ -343,7 +343,7 @@ var D={
     cast:{n:1},go:'Walk to the podium',placeholder:'Answer the press',leave:'Leave the podium'})
  ],
  career:[
-  C('The Job Interview','Interview room',2,'Interview for Marketing Executive at BrightWave Media and score at least 80%.',{scene:'interview',mode:'seated',picker:{me:true,target:false},maxT:14,winScore:80,minWinTurn:13,skills:WORK_SK,ai:work({
+  C('The Job Interview','Interview room',2,'Achieve an interview score of at least 80%.',{scene:'interview',mode:'seated',picker:{me:true,target:false},maxT:14,winScore:80,minWinTurn:13,skills:WORK_SK,ai:work({
     who:'a hiring manager interviewing a candidate for a Marketing Executive role at BrightWave Media',
     scene:'SCENE: A meeting room at BrightWave Media, Monday 10am. You are interviewing the player for a Marketing Executive role. You have their CV in front of you but you want to hear it from them.',
     feel:'interest is how strongly you would recommend hiring the player (0-100). comfort is how confident you are in their communication and fit. patience is how much time and goodwill you have left.',
@@ -358,7 +358,7 @@ var D={
     hint:'Give specific examples with a result, not general claims. Show you know what BrightWave does.',
     openCue:function(p){return p.name+' glances at your CV, closes the folder and looks up.'},timeoutCue:function(p){return p.name+' checks the time, stands and thanks you for coming in.'},
     cast:{n:1},go:'Enter the room',placeholder:'Answer Sarah',leave:'End the interview'}),
-  C('The Customer Complaint','Electronics store',2,'Handle an angry customer and get her to accept your solution.',{scene:'electronics',mode:'seated',picker:{me:true,target:false},maxT:12,skills:WORK_SK,ai:work({
+  C('The Customer Complaint','Electronics store',2,'Resolve the complaint and get her to accept your proposed solution.',{scene:'electronics',mode:'seated',picker:{me:true,target:false},maxT:12,skills:WORK_SK,ai:work({
     who:'an angry customer at an electronics store',
     scene:'SCENE: A busy electronics store on a Saturday morning. You bought a blender three days ago and it has stopped working. You have the box and receipt in a carrier bag. You are at the service counter. You want a refund and you are angry and embarrassed that you have to come back already.',
     feel:'interest is how willing you are to accept what the player offers (0-100, you start very reluctant). comfort is how heard and respected you feel. patience is how much patience you have left before you demand a manager or leave.',
@@ -373,7 +373,7 @@ var D={
     hint:'Let her get it out first. Acknowledge how she feels, then offer something specific.',
     openCue:function(p){return p.name+' slams the box on the counter and folds her arms.'},timeoutCue:function(p){return p.name+' looks at the queue behind her and sighs.'},
     cast:{n:1},go:'Open the counter',placeholder:'Reply to Mrs Williams',leave:'Walk away'}),
-  C('The Salesperson','Beverage store',1,'Convince a customer to buy at least two bottles of Zest Cola.',{scene:'beverage',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
+  C('The Salesperson','Beverage store',1,'Get the customer to purchase at least two bottles.',{scene:'beverage',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
     who:'a customer in a beverage shop',
     scene:'SCENE: A bright corner beverage shop on a weekday afternoon. You walked in for a cold drink and have not decided what to buy. The player works here and is trying to sell you the shop\'s new soda, Zest Cola.',
     feel:'interest is how tempted you are to buy (0-100). comfort is how relaxed you feel being sold to. patience is how much time you are willing to spend.',
@@ -388,7 +388,7 @@ var D={
     hint:'Find out what he usually drinks, then connect Zest Cola to it. Offer, do not push.',
     openCue:function(p){return p.name+' wanders over to the fridge and reaches for a familiar bottle.'},timeoutCue:function(p){return p.name+' checks his watch and heads for the till.'},
     cast:{n:1},go:'Open the shop',placeholder:'Say something to Mr Anderson',leave:'Walk away'}),
-  C('Deadline Negotiation','Manager\'s office',2,'Get your manager to extend a deadline by two days or cut the workload.',{scene:'office',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
+  C('Deadline Negotiation','Manager\'s office',2,'Get your manager to extend the deadline by at least two days or agree to reduce the workload.',{scene:'office',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
     who:'a busy manager',
     scene:'SCENE: Your office, Wednesday afternoon. You assigned the player a client presentation due tomorrow morning. The player has asked to talk. You know they already have two important assignments due. You have your own pressure from the client.',
     feel:'interest is how open you are to adjusting the deadline or workload (0-100, you start low). comfort is how much you trust the player to deliver. patience is how much time and goodwill you have for this conversation.',
@@ -403,7 +403,7 @@ var D={
     hint:'Lead with what you already have due, then give him an option rather than a problem.',
     openCue:function(p){return p.name+' glances up from his screen and nods at the chair.'},timeoutCue:function(p){return p.name+' looks at the time and reaches for his phone.'},
     cast:{n:1},go:'Knock and go in',placeholder:'Say something to Mr Roberts',leave:'Leave the office'}),
-  C('The Workplace Mistake','Bank manager\'s office',3,'Own up to sending the wrong report, take responsibility and show a plan to prevent it.',{scene:'bank',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
+  C('The Workplace Mistake','Bank manager\'s office',3,'Explain the mistake honestly, take responsibility and convince your manager that you have a reliable plan to prevent it from happening again.',{scene:'bank',mode:'seated',picker:{me:true,target:false},maxT:10,skills:WORK_SK,ai:work({
     who:'a bank manager',
     scene:'SCENE: Your office at Sterling Bank, Thursday morning. An outdated financial report was sent to an important client, who has already noticed the numbers are wrong and phoned you. You called the player in to explain. You are concerned, not yet furious.',
     feel:'interest is how confident you are that the player is reliable and will fix this (0-100, you start low). comfort is how honest and accountable the player seems. patience is how much patience you have left.',

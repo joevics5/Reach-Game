@@ -84,3 +84,4 @@ Copied in spirit from Courtroom Quest (`src/lib/ai/trialAI.ts`): every agent is 
 - Coffee by Text shows a group-chat contact picker (8 people) before the chat opens (`showContacts`).
 - Explore camera rises when the player is against a wall, so the head does not fill the screen.
 - Shark Tank and Board Pitch: the lead is one of the five panelists (4 named agents + lead; `leadRates:true`) and also asks in the flow.
+- Source of truth for goals/setups: the user's original document (attachment 68cc7ac7). Debate = player seated at a table opposite one opponent, four wait on the sofa, rounds judged silently (`rounds.hidden`), result only after all five. Career goals use the document's own "Goal:" lines. Coffee by Text offers 10 contacts.
