@@ -22,7 +22,7 @@ function build(){
  // our table and chairs
  cy(sc,.8,.05,0xcaa078,C.x,.75,C.z);cy(sc,.07,.72,0x777f88,C.x,.37,C.z);cy(sc,.4,.04,0x777f88,C.x,.03,C.z);obst.push({t:'c',x:C.x,z:C.z,r:.95});
  function chair(x,z,ry){var g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;sc.add(g);bx(g,.52,.07,.5,0x2c3e50,0,.44,0);bx(g,.5,.6,.06,0x2c3e50,0,.78,-.24);cy(g,.04,.42,0x555,0,.22,0)}
- chair(C.x,C.z+.95,Math.PI);chair(C.x,C.z-.95,0);
+ chair(C.x,C.z+.95,Math.PI);chair(C.x,C.z-.95,0);chair(C.x-1.05,C.z-.75,.9);chair(C.x+1.05,C.z-.75,-.9);
  // CV folder, water glasses, laptop
  bx(sc,.3,.015,.22,0xe0663a,C.x-.1,.79,C.z-.3);cy(sc,.04,.1,0xddeeff,C.x+.35,.82,C.z+.1);cy(sc,.04,.1,0xddeeff,C.x-.35,.82,C.z-.2);
  // plants, credenza
@@ -35,9 +35,11 @@ function build(){
 function setup(){
  K.player(C.x,C.z+.95,Math.PI,-.45);
  K.person(G.cast[0],{x:C.x,y:-.45,z:C.z-.95,h:0,seat:1,st:'drink'});
+ // two more interviewers beside her
+ [[-1.05,-.75,.9],[1.05,-.75,-.9]].forEach(function(p,i){var c=makeChar(Object.assign(randLook(i===1),{lod:'hi'}));c.seat=true;c.g.position.set(C.x+p[0],-.45,C.z+p[1]);c.g.rotation.y=p[2];W.dyn.add(c.g);W.npcs.push({c:c,st:'idle',t0:i*3})});
  // staff in the open office beyond the glass
  [[-2.4,.5],[0,.1],[2.4,.5]].forEach(function(p,i){var c=makeChar(Object.assign(randLook(i%2==0),{lod:'lo'}));c.seat=true;c.g.position.set(RX-.15,-.45,p[0]);c.g.rotation.y=-Math.PI/2;W.dyn.add(c.g);W.npcs.push({c:c,st:pk(['talk','phone','drink']),t0:i*3})});
 }
-function talkCam(){var a=W.orb*.5,r=3.9;return {px:C.x+Math.cos(a)*r,py:1.65,pz:C.z+Math.sin(a)*r*.9,tx:C.x,ty:1.2,tz:C.z}}
+function talkCam(){var a=1.25+W.orb*.5,r=3.9;return {px:C.x+Math.cos(a)*r,py:1.65,pz:C.z+Math.sin(a)*r*.9,tx:C.x,ty:1.2,tz:C.z}}
 K.scenes.reg('interview',{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:talkCam});
 })();

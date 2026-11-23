@@ -91,6 +91,8 @@
       ? 'The scene is just starting. Speak first, in character: ' + (ctx.openTask || 'open the exchange with the line or question this person would start with') + '.'
       : kind === 'question'
       ? 'It is your turn to ask the player ONE question about what they pitched. Ask it from your own angle, pointed and specific, and different from any question already asked in the transcript. If you truly have nothing worth asking, set "forfeit" to true and leave "say" empty.'
+      : kind === 'interview'
+      ? 'It is your turn to ask the candidate the next interview question. Use the role and the CV in the scene text (if there is no CV, ask about the role itself). Ask ONE question of one or two sentences, from your own angle, and do not repeat a topic already covered in the transcript. If the transcript is empty, begin with a short professional welcome and an opening question such as asking them to introduce themselves. Otherwise you may acknowledge the last answer in a few words first.'
       : kind === 'followup'
       ? 'Ask the player ONE short follow-up, based on their last answer: probe a weak spot, gap or dodge in it. If the answer fully satisfied you or you have nothing more to ask, set "forfeit" to true and leave "say" empty.'
       : 'It is your turn to speak now. Respond to what the player just said' + (ctx.round != null ? ' (this is turn ' + ctx.turnInRound + ' of ' + ctx.per + ' of this round)' : '') + '.';
@@ -121,6 +123,7 @@
   function demoSpeak(ctx, a, kind) {
     var open = ['Go ahead, we are listening.', 'Whenever you are ready.', 'Tell us what you have.'],
       mid = ['Interesting. Say a bit more about that.', 'Hm. Can you give a real example?', 'Okay, I follow. What is the key point?', 'That landed with me. Keep going.'];
+    if (kind === 'interview') return Promise.resolve({ say: pk(['Tell me about yourself and why this role.', 'Walk me through a project you are proud of.', 'Describe a time something went wrong and what you did.', 'How do you handle two deadlines at once?', 'Where do you want to be in three years?', 'What would you change in our current approach?']), cue: a.name + ' makes a note.', end: null });
     if (kind === 'question') return Promise.resolve({ say: pk(['Walk me through how you make money.', 'Who is your real competition?', 'What happens if your biggest customer leaves?', 'Why are you the one to build this?', 'What do the numbers look like today?']), cue: a.name + ' leans in.', end: null, forfeit: false });
     if (kind === 'followup') return Promise.resolve(Math.random() < .25 ? { say: '', cue: a.name + ' shrugs: nothing more to ask.', end: null, forfeit: true } : { say: pk(['And how sure are you of that?', 'Can you back that up with a number?', 'What would you do if that failed?']), cue: a.name + ' presses.', end: null, forfeit: false });
     return Promise.resolve({ say: pk(kind === 'open' ? open : mid), cue: a.name + ' listens.', end: null });
@@ -192,6 +195,7 @@
     rule = rule || { type: 'majority' };
     var total = res.yes + res.no;
     if (rule.type === 'any') return res.yes >= 1;
+    if (rule.type === 'avg') return total > 0 && res.avg >= rule.min;
     if (rule.type === 'share') return total > 0 && res.yes / total >= rule.min;
     if (rule.type === 'rounds') return res.roundsWon >= rule.min;
     return res.yes > res.no;
