@@ -4,7 +4,7 @@ var K=window.ReachKit,W=K.W,G=K.G,bx=K.bx,cy=K.cy,sp=K.sp,mesh=K.mesh,M=K.M,tex=
 function chair(sc,x,z,ry,c){var g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;sc.add(g);bx(g,.46,.07,.44,c,0,.44,0);bx(g,.44,.5,.06,c,0,.72,-.2);cy(g,.03,.42,0x333333,0,.22,0);return g}
 function guests(list){list.forEach(function(p,i){var c=makeChar(Object.assign(randLook((i+(p[4]||0))%2===0),{lod:"lo"}));c.seat=!!p[3];c.g.position.set(p[0],p[3]?-.45:0,p[1]);c.g.rotation.y=p[2];W.dyn.add(c.g);W.npcs.push({c:c,st:p[3]?pk(["idle","talk","phone"]):pk(["idle","talk"]),t0:i*1.3})})}
 function room(sc,RX,RZ,wc,fc,cc){var fl=new THREE.Mesh(new THREE.PlaneGeometry(RX*2,RZ*2),new THREE.MeshLambertMaterial({color:fc}));fl.rotation.x=-Math.PI/2;sc.add(fl);var w=M(wc);bx(sc,RX*2,3.6,.3,0,0,1.8,-RZ-.15,w);bx(sc,.3,3.6,RZ*2,0,-RX-.15,1.8,0,w);bx(sc,.3,3.6,RZ*2,0,RX+.15,1.8,0,w);bx(sc,RX*2,3.6,.3,0,0,1.8,RZ+.15,w);bx(sc,RX*2,.2,RZ*2,0,0,3.65,0,M(cc))}
-function cam(cx,cz,r,py,ty){return function(){var a=W.orb*.5;return {px:cx+Math.cos(a)*r,py:py,pz:cz+Math.sin(a)*r*.9,tx:cx,ty:ty||1.25,tz:cz}}}
+function cam(cx,cz,r,py,ty,a0){return function(){var a=(a0||0)+W.orb*.5;return {px:cx+Math.cos(a)*r,py:py,pz:cz+Math.sin(a)*r*.9,tx:cx,ty:ty||1.25,tz:cz}}}
 
 var RX=8,RZ=7;
 function build(){var obst=[],sc=new THREE.Scene();sc.background=new THREE.Color(0x2a1f2e);
@@ -25,9 +25,9 @@ function build(){var obst=[],sc=new THREE.Scene();sc.background=new THREE.Color(
  return {scene:sc,obst:obst}}
 function setup(){
  K.player(0,-5.8,0,0);
- K.person(G.cast[0],{x:0,y:0,z:-3.8,h:Math.PI,seat:0,st:"idle"});
+ K.person(G.cast[0],{x:-3.99,y:-.45,z:.25,h:-2.2,seat:1,st:"idle"});
  var g=[];[[-5,-.5],[5,-.5],[-5,3.4],[5,3.4]].forEach(function(t,k){for(var i=0;i<5;i++){var a=i/5*6.28+k;g.push([t[0]+Math.cos(a)*1.25,t[1]+Math.sin(a)*1.25,Math.atan2(-Math.cos(a),-Math.sin(a)),1])}});
  guests(g);
 }
-K.scenes.reg("wedding",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-4.8,3.8,1.7,1.3),talkLimitZ:-3});
+K.scenes.reg("wedding",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-3.4,3.4,2.0,1.2,-1.1),talkLimitZ:-3});
 })();

@@ -30,5 +30,5 @@ function setup(){
  K.person(G.cast[0],{x:0,y:-.45,z:-3.5,h:0,seat:1,st:"idle"});
  guests([[-RX+1.9,.4,Math.PI/2*3,0],[-RX+2,-2,Math.PI/2*3,0,1],[3,3,Math.PI,0],[4,-.5,0,0,1]]);
 }
-K.scenes.reg("loan",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-2.5,3.4,1.55,1.2,.7),talkLimitZ:-1.2});
+K.scenes.reg("loan",{fill:{n:2},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-2.5,3.4,1.55,1.2,.7),talkLimitZ:-1.2});
 })();

@@ -37,5 +37,5 @@ function setup(){
  var k=makeChar(Object.assign(randLook(Math.random()<.5),{lod:'lo'}));k.g.position.set(4.2,0,2.6);k.g.rotation.y=Math.PI;W.dyn.add(k.g);W.npcs.push({c:k,st:'idle',t0:2});
 }
 function talkCam(){var a=W.orb*.5,r=3.6;return {px:C.x-.5+Math.cos(a)*r,py:1.5,pz:C.z+Math.sin(a)*r*.9,tx:C.x-.5,ty:1.3,tz:C.z}}
-K.scenes.reg('beverage',{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:talkCam});
+K.scenes.reg('beverage',{fill:{n:4,pairs:1,wander:1},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:talkCam});
 })();

@@ -30,5 +30,5 @@ function setup(){
  guests(g);
  guests([[-2.5,-RZ+2,0,0],[3,-RZ+2.2,Math.PI*.9,0,1],[1.5,-RZ+.4,Math.PI,0]]);
 }
-K.scenes.reg("cafeteria",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(1.2,-1.4,3.6,1.6,1.1,1.4),talkLimitZ:-3});
+K.scenes.reg("cafeteria",{fill:{n:3,pairs:1,wander:2},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(1.2,-1.4,3.6,1.6,1.1,1.4),talkLimitZ:-3});
 })();

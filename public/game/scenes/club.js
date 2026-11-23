@@ -31,5 +31,5 @@ function setup(){
  var g=[[-1.8,.2,Math.PI*.8,1],[1.8,.2,-Math.PI*.8,1],[-2.8,1.4,Math.PI*.6,1,1],[2.8,1.4,-Math.PI*.6,1,1]];
  guests(g);
 }
-K.scenes.reg("club",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-.9,5,1.8,1.1,.7),talkLimitZ:-3.5});
+K.scenes.reg("club",{fill:{n:2,pairs:1},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-.9,5,1.8,1.1,.7),talkLimitZ:-3.5});
 })();

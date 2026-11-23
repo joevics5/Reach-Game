@@ -250,14 +250,30 @@ async function startChallenge(){
  G.pre='<div class="pre"><b>'+esc(fillT(ch.pre,p).split('. ')[0])+'.</b> '+esc(fillT(ch.pre,p).split('. ').slice(1).join('. '))+coach+'</div>';
  G.pre2=G.pre;
  var pl=$('s-play');pl.classList.toggle('phonemode',ch.mode==='chat');
- if(ch.mode==='chat'){$('pgoal').innerHTML='<b>Goal:</b> '+esc(ch.goal);$('pgoal').hidden=false;show('play');beginChat();return}
+ if(ch.mode==='chat'){$('pgoal').innerHTML='<b>Goal:</b> '+esc(ch.goal);$('pgoal').hidden=false;show('play');if(G.cast.length>1){showContacts();return}beginChat();return}
  $('pgoal').hidden=true;
- if(ch.mode==='seated'){G.pre='<div class="pre"><b>Find '+esc(p.name)+'.</b> '+esc(ch.walk||'Walk over to '+(p.gender==='woman'?'her':'him')+' and tap Talk when you are close.')+coach+'</div>';$('log').innerHTML=G.pre}else $('log').innerHTML=G.pre;
+ if(ch.mode==='seated'){G.pre='<div class="pre"><b>'+esc(ch.walkTitle||'Find '+p.name)+'.</b> '+esc(ch.walk||'Walk over to '+(p.gender==='woman'?'her':'him')+' and tap Talk when you are close.')+coach+'</div>';$('log').innerHTML=G.pre}else $('log').innerHTML=G.pre;
  var t=$('tip');t.style.opacity=1;setTimeout(function(){t.style.opacity=0},7000);
  var ok=await loadScene(ch.scene);
  if(!ok){$('log').innerHTML='<div class="pre">This scene could not load. Check your connection and try again.</div>';return}
  show('play');
  setupPlay();
+}
+function showContacts(){
+ var ch=G.ch,L=$('log');$('comp').hidden=true;$('acts').hidden=true;$('timebox').hidden=true;
+ L.innerHTML='<div class="pre"><b>The group chat.</b> '+esc(G.cast.length)+' people are in it tonight. Pick one to message privately.</div><div id="contacts" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>';
+ var box=$('contacts');
+ G.cast.forEach(function(p,i){
+  var b=document.createElement('button');b.className='ghost';b.style.cssText='display:flex;align-items:center;gap:8px;text-align:left;padding:8px 12px';
+  b.innerHTML='<span class="av" style="display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#1a1208;font-weight:700">'+esc(p.name.charAt(0))+'</span><span><b>'+esc(p.name)+'</b><br><small style="opacity:.7">'+esc((p.arch.label||'').replace(/^The /,''))+'</small></span>';
+  b.addEventListener('click',function(){
+   G.p=p;G.cur={interest:p.interest,comfort:p.comfort,patience:p.patience};
+   var t=fillT(ch.pre,p).split('. ');G.pre2='<div class="pre"><b>'+esc(t[0])+'.</b> '+esc(t.slice(1).join('. '))+'</div>';
+   $('msg').placeholder=fillT(ch.placeholder||'Say something',p);
+   beginChat();
+  });
+  box.appendChild(b);
+ });
 }
 function beginChat(){
  var ch=G.ch;G.status='talk';$('back').hidden=true;G.rules=rules(G.p,G.me,G.guide,'');
@@ -283,7 +299,7 @@ function scrollLog(){var l=$('log');l.scrollTop=l.scrollHeight}
 function beginTalk(){
  if(G.status!=='explore')return;
  G.status='approaching';$('talk').classList.remove('on');
- G.hist=[];G.notes=[];G.turn=0;G.cur={interest:G.p.interest,comfort:G.p.comfort,patience:G.p.patience};
+ G.engaged=false;G.camSide=null;G.hist=[];G.notes=[];G.turn=0;G.cur={interest:G.p.interest,comfort:G.p.comfort,patience:G.p.patience};
  W.herSt=W.girls[W.sel].st;W.herMode=W.herSt;
  var dir=approachDir(),seatedCh=G.ch.mode==='seated';G.approach=seatedCh?'':dir==='front'?'from the front':dir==='behind'?'from behind her or his back':'from the side';
  G.rules=rules(G.p,G.me,G.guide,seatedCh?'':approachLine(G.p,dir));
@@ -293,7 +309,9 @@ function beginTalk(){
   $('chsub').textContent=G.ch.chat.who||'';
   $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
   $('log').innerHTML=seatedCh?G.pre2:'';
-  cueLine(sceneCue());
+  var gg=G.ch.group,leadFirst=gg&&(gg.open&&!gg.flow);
+  G.cueLater=!leadFirst;
+  cueLine(leadFirst?sceneCue():(gg?'You are in position. Speak when you are ready.':'You stop near '+G.p.name+'. Say hello when you are ready.'));
   if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(seatedCh?(G.ch.hint||'Listen to the answers and build on them.'):openHint(dir))}
   $('msg').focus({preventScroll:true});
   if(G.ch.group)groupStart();
@@ -303,7 +321,7 @@ function sceneCue(){
  if(G.ch.openCue)return G.ch.openCue(G.p);
  var p=G.p,pr=p.gender==='woman'?'She':'He';
  var base={'waiting for a friend who is running late':'checks the time on a phone','having a quiet drink after a long week':'turns a glass slowly on the bar','celebrating a small win alone before friends turn up':'sips a drink with a small private smile','killing time before a train':'glances at the clock above the bar','half-watching the match on the TV':'watches the match on the TV in the corner','reading on a phone with a drink':'scrolls on a phone'}[p.circ];
- return pr+' '+(base||'sips a drink')+'. '+p.name+' notices you standing there.';
+ return pr+' '+(base||'sips a drink')+', then turns toward you.';
 }
 function openHint(dir){
  return dir==='behind'?'You came from behind, so start gently. A calm hello that gives space works better than a loud one.':'Keep it light and about the moment: the place, the music, the match. Ask something they can answer easily.';
@@ -314,7 +332,7 @@ function buildGroup(){
  var g=G.ch&&G.ch.group;G.grp=null;G.panel=null;if(!g)return;
  var lead={id:'lead',name:G.p.name,gender:G.p.gender,age:G.p.age,job:G.p.job,role:g.leadRole||'',who:g.leadWho||'',talks:true,rates:g.leadRates!==false,lead:true};
  G.grp={cfg:g,lead:lead,agents:[lead],gh:[],roundsWon:0,roundLog:[],ph:{phase:'intro',queue:[],stage:'q',cur:null}};
- if(g.flow){var nt=(g.agents||[]).filter(function(a){return a.talks!==false}).length;G.maxT=2+nt*2}
+ if(g.flow){var nt=(g.agents||[]).filter(function(a){return a.talks!==false}).length+1;G.maxT=2+nt*2}
 }
 function sexOf(n){return n.c.spec&&n.c.spec.sex==='f'?'woman':'man'}
 /* Gives the named agents and the audience a body: they take over people the scene already placed. */
@@ -350,6 +368,7 @@ function typingOn(){var tp=document.createElement('div');tp.className='typing';t
 function inputOn(on){G.busy=!on;$('send').disabled=!on;$('msg').disabled=!on;if(on)try{$('msg').focus({preventScroll:true})}catch(e){}}
 async function groupStart(){
  var gp=G.grp,g=gp.cfg;
+ if(g.open||g.flow)G.engaged=true;
  if(g.flow){cueLine(g.flow.introCue||'Round 1: introduce yourself. Take your time.');$('msg').placeholder=g.flow.introPlaceholder||'Introduce yourself...';return}
  if(!g.open)return;
  inputOn(false);var tp=typingOn();
@@ -390,7 +409,7 @@ async function flowTurn(txt,tp){
  gp.gh.push({who:'player',text:txt});updateTime();
  G.notes.push({u:txt,say:'',cue:'',tag:'other',quality:'ok',note:ph.phase});
  if(ph.phase==='intro'){
-  tp.remove();ph.queue=shuf(gp.agents.filter(function(a){return a.talks&&!a.lead}));ph.phase='ask';ph.stage='q';
+  tp.remove();ph.queue=shuf(gp.agents.filter(function(a){return a.talks}));ph.phase='ask';ph.stage='q';
   cueLine(F.askCue||'Questions: each panelist may ask one question and one follow-up.');
   return flowNext(null);
  }
@@ -455,7 +474,12 @@ async function groupRoundEnd(pl){
 }
 function swapLead(d){
  var gp=G.grp,p=fixedPersona(d,d.gender);
- if(W.her){W.dyn.remove(W.her.g);for(var i=W.girls.length-1;i>=0;i--)if(W.girls[i].c===W.her)W.girls.splice(i,1)}
+ if(W.her){var old=W.her;for(var i=W.girls.length-1;i>=0;i--)if(W.girls[i].c===old)W.girls.splice(i,1);
+  if(W.sofa&&W.sofa.length){ /* the next opponent gets up from the sofa; the one who just spoke takes the seat */
+   var want=d.gender==='woman'?'woman':'man',k=0;for(var j=0;j<W.sofa.length;j++)if(sexOf(W.sofa[j])===want){k=j;break}
+   var sn=W.sofa[k];sn.c.g.visible=false;old.seat=true;old.look=null;old.g.position.set(sn.c.g.position.x,-.45,sn.c.g.position.z);old.g.rotation.y=sn.c.g.rotation.y;
+   var nn={c:old,st:'idle',t0:Math.random()*5};W.npcs.push(nn);W.sofa[k]=nn}
+  else W.dyn.remove(old.g)}
  W.sel=-1;K.person(p,W.leadSlot);selectGirl(W.girls.length-1);
  var l=gp.lead;l.name=p.name;l.gender=p.gender;l.age=p.age;l.job=p.job;l.who=d.who||'';l.role=gp.cfg.leadRole||'';
  $('chname').textContent=p.name;cueLine(p.name+' steps up.');
@@ -497,10 +521,12 @@ async function send(){
  if(G.status!=='talk'||G.busy)return;
  var ta=$('msg'),txt=ta.value.trim();if(!txt)return;
  cancelMic();setErr('');
+ G.engaged=true;
  G.turn++;
  var u='[Turn '+G.turn+' of '+G.maxT+'] The player says: "'+txt.replace(/"/g,'”')+'"';
  var entry={u:u,a:null,raw:txt};G.hist.push(entry);
  addMsg('me',txt);ta.value='';autoGrow();
+ if(G.cueLater){G.cueLater=false;cueLine(sceneCue())}
  G.busy=true;$('send').disabled=true;$('msg').disabled=true;
  var tp=document.createElement('div');tp.className='typing';tp.innerHTML='<i></i><i></i><i></i>';$('log').appendChild(tp);scrollLog();
  if(G.ch.group)return groupTurn(txt,tp,entry);
@@ -801,6 +827,27 @@ function nameSprite(txt,you){
 }
 /* kit handed to scene files */
 K.bx=bx;K.cy=cy;K.cn=cn;K.sp=sp;K.el=el;K.mesh=mesh;K.M=M;K.MB=MB;K.V=V;K.tex=tex;K.haloTex=haloTex;K.makeChar=makeChar;K.randLook=randLook;K.pk=pk;K.shuffle=shuffle;K.clamp=clamp;K.pose=pose;K.nameSprite=nameSprite;window.ReachKit=K;
+/* K.fill: scatter background people over the free floor of the current room.
+   o: {n standing, wander walkers, pairs: chatting couples, box:{x1,x2,z1,z2}, avoid:[{x,z,r}]}. Keeps clear of obstacles, the entrance, the walk to the player's spot and the people you talk to. */
+K.fill=function(o){
+ o=o||{};var B=W.bounds,box=o.box||{x1:-B.rx+.9,x2:B.rx-.9,z1:-B.rz+.9,z2:B.rz-1.6},avoid=(o.avoid||[]).slice(),placed=[];
+ var st=W.S.start||{x:0,z:B.rz-1.1};avoid.push({x:st.x,z:st.z,r:1.6});
+ if(W.spot){for(var k=0;k<=8;k++)avoid.push({x:st.x+(W.spot.x-st.x)*k/8,z:st.z+(W.spot.z-st.z)*k/8,r:1.1});avoid.push({x:W.spot.x,z:W.spot.z,r:1.8})}
+ W.girls.forEach(function(g){avoid.push({x:g.base.x,z:g.base.z,r:1.7})});
+ W.girls.forEach(function(g){if(W.spot)avoid.push({x:(g.base.x+W.spot.x)/2,z:(g.base.z+W.spot.z)/2,r:3.2})});
+ if(W.S.talkCam){try{var tc=W.S.talkCam(K);avoid.push({x:tc.px,z:tc.pz,r:3.4});for(var k3=1;k3<8;k3++)avoid.push({x:tc.px+(tc.tx-tc.px)*k3/8,z:tc.pz+(tc.tz-tc.pz)*k3/8,r:1.2})}catch(e){}}
+ function free(x,z,r){var p={x:x,z:z};resolve(p,.45);if(Math.hypot(p.x-x,p.z-z)>.02)return false;
+  for(var i=0;i<avoid.length;i++)if(Math.hypot(avoid[i].x-x,avoid[i].z-z)<avoid[i].r)return false;
+  for(var j=0;j<placed.length;j++)if(Math.hypot(placed[j].x-x,placed[j].z-z)<(r||1.0))return false;return true}
+ function spot(r){for(var t=0;t<300;t++){var x=box.x1+Math.random()*(box.x2-box.x1),z=box.z1+Math.random()*(box.z2-box.z1);if(free(x,z,r))return{x:x,z:z}}return null}
+ function person(x,z,h,sts){var c=makeChar(Object.assign(randLook(Math.random()<.5),{lod:'lo'}));c.g.position.set(x,0,z);c.g.rotation.y=h;W.dyn.add(c.g);var n={c:c,st:pk(sts||['idle','talk','phone','idle']),t0:Math.random()*10};W.npcs.push(n);return n}
+ for(var i=0;i<(o.pairs||0);i++){var p=spot(1.6);if(!p)break;var a=Math.random()*6.28,dx=Math.cos(a)*.42,dz=Math.sin(a)*.42;placed.push(p);
+  person(p.x-dx,p.z-dz,Math.atan2(dx,dz),['talk','idle','talk']);person(p.x+dx,p.z+dz,Math.atan2(-dx,-dz),['talk','idle','talk'])}
+ for(var i2=0;i2<(o.n||0);i2++){var q=spot(1.1);if(!q)break;placed.push(q);person(q.x,q.z,Math.random()*6.28)}
+ function segOK(a,b){for(var u=0;u<=8;u++){var x=a.x+(b.x-a.x)*u/8,z=a.z+(b.z-a.z)*u/8;if(!free(x,z,0))return false}return true}
+ for(var i3=0;i3<(o.wander||0);i3++){var w=spot(1.2);if(!w)break;var wp=[V(w.x,0,w.z)];for(var k2=0;k2<8&&wp.length<4;k2++){var e=spot(.3);if(e&&segOK(wp[wp.length-1],e))wp.push(V(e.x,0,e.z))}if(wp.length<3||!segOK(wp[wp.length-1],wp[0]))break;
+  var nn=person(w.x,w.z,0,['idle']);nn.wander=true;nn.wp=wp;nn.wi=0;nn.pause=1+Math.random()*2}
+};
 K.player=function(x,z,h,y){
  var seatedMode=G.ch&&G.ch.mode==='seated';W.spot=null;
  if(seatedMode){var st0=W.S.start||{x:0,z:W.S.rz-1.1,h:Math.PI};W.spot={x:x,z:z,h:h,y:y||0};x=st0.x;z=st0.z;h=st0.h;y=0}
@@ -826,7 +873,7 @@ function setupPlay(){
  W.dyn=new THREE.Group();W.scene.add(W.dyn);
  W.dynObst=W.obst.length;
  W.npcs=[];W.exit=null;W.tgt=null;W.auto=null;W.orb=0;W.cyaw=Math.PI;W.face=false;W.speak=0;W.girls=[];W.meY=0;W.sel=-1;W.her=null;W.leadSlot=null;
- S.setup(K);
+ S.setup(K);if(S.fill)K.fill(S.fill);
  selectGirl(0);W.herMode=W.herSt;
  buildGroup();bindAgents();
  // mood ring + marker over the person (guide mode)
@@ -936,8 +983,9 @@ function updMe(dt,t){
  // talk prompt
  if(G.status==='explore'){
   var bi=0,bd=1e9;W.girls.forEach(function(g,i){var d=Math.hypot(pos.x-g.base.x,pos.z-g.base.z);if(d<bd){bd=d;bi=i}});
-  selectGirl(bi);var near=bd<3.3;
-  $('talk').classList.toggle('on',near);if(near)$('talk').textContent='Talk to '+G.p.name;
+  selectGirl(bi);var near=bd<3.3,lbl='Talk to '+G.p.name;
+  if(G.ch.talkLabel&&W.spot){near=Math.hypot(pos.x-W.spot.x,pos.z-W.spot.z)<1.8;lbl=G.ch.talkLabel}
+  $('talk').classList.toggle('on',near);if(near)$('talk').textContent=lbl;
  }
  $('joy').classList.toggle('off',G.status!=='explore');
 }
@@ -952,6 +1000,8 @@ function updHer(dt,t){
   if(W.ring)W.ring.visible=false;return;
  }
  if(G.status==='explore')return;
+ if(G.status==='talk'&&!G.engaged){ /* the player has arrived but has not spoken yet: the person has not noticed them */
+  h.look=null;if(!(W.S&&W.S.side))h.g.rotation.y+=wrapA(W.herH-h.g.rotation.y)*Math.min(1,dt*3);pose(h,'idle',dt,0,t);return}
  h.look=V(W.mePos.x,1.72,W.mePos.z);
  // turn to player
  var fh=Math.atan2(W.mePos.x-W.herBase.x,W.mePos.z-W.herBase.z);
@@ -992,6 +1042,11 @@ function updCam(dt){
  }else if(G.status==='talk'||G.status==='ended'||G.status==='approaching'){
   var hx=W.herBase.x,hz=W.herBase.z,dx=hx-pos.x,dz=hz-pos.z,L=Math.sqrt(dx*dx+dz*dz)||1,fx=dx/L,fz=dz/L,mx=(hx+pos.x)/2,mz=(hz+pos.z)/2,rx=-fz,rz=fx;
   if(mx*rx+(mz-2)*rz>0){rx=-rx;rz=-rz}
+  if(G.camSide==null&&G.status==='talk'){ /* pick the side of the pair with fewer bystanders between the camera and the conversation */
+   var best=1,bc=1e9;[1,-1].forEach(function(sd){var cx=mx+rx*sd*3.1,cz=mz+rz*sd*3.1,cnt=0;
+    W.npcs.forEach(function(n){var q=n.c.g.position,vx=mx-cx,vz=mz-cz,tt=clamp(((q.x-cx)*vx+(q.z-cz)*vz)/(vx*vx+vz*vz),0,1),d=Math.hypot(q.x-(cx+vx*tt),q.z-(cz+vz*tt));if(d<.8)cnt++;if(Math.hypot(q.x-cx,q.z-cz)<1.2)cnt+=2});
+    if(cnt<bc){bc=cnt;best=sd}});G.camSide=best}
+  rx*=(G.camSide||1);rz*=(G.camSide||1);
   var ang=W.orb*.5,cs=Math.cos(ang),sn=Math.sin(ang),qx=rx*cs-fx*sn,qz=rz*cs-fz*sn;
   px=mx+qx*3.1;py=1.7;pz=mz+qz*3.1;
   tx=mx+fx*.35;ty=1.35;tz=mz+fz*.35;
@@ -1000,6 +1055,7 @@ function updCam(dt){
   px=pos.x-fx2*4.6;py=3.1;pz=pos.z-fz2*4.6;tx=pos.x+fx2*2.2;ty=1.1;tz=pos.z+fz2*2.2;
  }
  var B=W.bounds;px=clamp(px,-B.rx+.5,B.rx-.5);pz=clamp(pz,-B.rz+.5,B.rz-.5);
+ if(G.status==='explore'){var dd=Math.hypot(px-pos.x,pz-pos.z);if(dd<4){py=Math.min(py+(4-dd)*.4,4.6);ty+=(4-dd)*.15}} /* against a wall the camera rises instead of sitting on the player's head */
  var k=1-Math.exp(-dt*4.5);
  cam.position.x+=(px-cam.position.x)*k;cam.position.y+=(py-cam.position.y)*k;cam.position.z+=(pz-cam.position.z)*k;
  W.look.x+=(tx-W.look.x)*k;W.look.y+=(ty-W.look.y)*k;W.look.z+=(tz-W.look.z)*k;

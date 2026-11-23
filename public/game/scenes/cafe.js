@@ -33,5 +33,5 @@ function setup(){
  guests([[.55,.95,-Math.PI/2*1.0-.3,1],[.55,.05,-Math.PI/2+.3,1,1]]);
  guests([[-4.5-.9,-.5,Math.PI/2,1],[-4.5+.9,-.5,-Math.PI/2,1,1],[4.4-.9,1.6,Math.PI/2,1]]);
 }
-K.scenes.reg("cafe",{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,.5,3.8,1.7,1.0,-1.2),talkLimitZ:-1});
+K.scenes.reg("cafe",{fill:{n:5,pairs:2,wander:1},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,.5,3.8,1.7,1.0,-1.2),talkLimitZ:-1});
 })();

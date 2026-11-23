@@ -3,7 +3,7 @@
 Reach is an AI social-simulation game (categories: Rizz, Make Friends). Next.js 15 shell (`app/`, `components/Game.tsx`) plus a vanilla JS / Three.js r128 game in `public/game/`. Gemini is called client-side (key entered in Settings). Deployed on Vercel from `main`. Playable: The Copper Lantern bar and The Date.
 
 ## Script load order (components/Game.tsx SCRIPTS)
-three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, **challenges.js**, **group.js**, game.js. Scene files in `public/game/scenes/` load on demand when a challenge starts. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v17) and list new files in its ASSETS.
+three.min.js, GLTFLoader, SkeletonUtils, ai.js, people.js, **avatar.js**, **cast.js**, **challenges.js**, **group.js**, game.js. Scene files in `public/game/scenes/` load on demand when a challenge starts. Add any new script before game.js. When adding or changing a game file, bump `CACHE` in `public/sw.js` (currently reach-v19) and list new files in its ASSETS.
 
 ## Challenge engine (data-driven)
 - **`public/game/challenges.js`** is the registry: 5 categories (toasting=Rizz, friends, startup, speaking, career), 5 challenges each (25). An entry with no `scene` shows as "coming soon". To make one playable give it: `scene` (file name in scenes/), `mode` ('approach' = walk around and choose someone, like the bar; 'seated' = start already talking), `cast:{n}`, `maxT` (turns), `ai` (intro, scene text, win rule, wrap-up, review wording; see BAR_AI / DATE_AI), `situation`, `pre`, `chat`, `circs`, `hint`, `openCue`, optional `winScore`/`minWinTurn` (hidden score decides the ending at the last turn, as in The Date), `custom` (optional name box).
@@ -75,3 +75,12 @@ Copied in spirit from Courtroom Quest (`src/lib/ai/trialAI.ts`): every agent is 
 - Used by: Best Man, Graduation, Difficult Question, Press, Shark Tank, Board Pitch, Table for More, 1 vs 5 Debate, Club President. Other challenges stay 1:1.
 - Only tested on the demo path (no key); verify with a live Gemini key.
 - **Structured flow** (`group.flow`, `speak:'flow'`): intro (player's one long turn) -> panelists ask in random order, one question + one follow-up each, either may be forfeited (forfeited question skips the follow-up) -> optional closing (Skip button) -> every panelist votes with a 0-100 score; `labels` rename yes/no (Invest/Out). Used by Shark Tank and Board Pitch; other panel-style challenges (Press, Q&A) can adopt it by adding `flow`, `labels`, `scoreHelp` to their group config. Code: `flowTurn/flowNext/flowAsk` in game.js, kinds `question`/`followup` in group.js.
+
+## Nov 2026 polish pass
+- **First message turns the person.** After the player walks up and taps Talk, the person keeps its pre-talk heading and does not look over (`G.engaged=false`). Sending the first message sets `G.engaged=true`; `updHer` then turns them and the scene's `openCue` is shown as the reaction. Group scenes where the lead speaks first (`group.open`, not flow) engage immediately.
+- **Speech scenes:** the lead (grandmother, questioner, reporter) sits/stands off to the side among the audience, never between the speaker and the room. Challenges with `walkTitle`, `walk`, `talkLabel` show a podium-style prompt and the Talk button appears at the speaking spot (`W.spot`) rather than near the lead.
+- **`K.fill(o)`** (game.js): scatter background people over free floor (`n`, `pairs`, `wander`, `box`, `avoid`); it keeps clear of obstacles, the entrance, the walk to the spot, the people you talk to and the talk camera sightline. Scenes opt in with `fill:{...}` in `reg()`. Do not add it to scenes whose crowd is already placed (wedding, graduation, qa, press, debate, stadium, restaurant, bar) or where it blocks the shot (sharktank).
+- Debate has a sofa with four waiting opponents (`W.sofa`); `swapLead` sends the next opponent up from the sofa and seats the one who just spoke.
+- Coffee by Text shows a group-chat contact picker (8 people) before the chat opens (`showContacts`).
+- Explore camera rises when the player is against a wall, so the head does not fill the screen.
+- Shark Tank and Board Pitch: the lead is one of the five panelists (4 named agents + lead; `leadRates:true`) and also asks in the flow.

@@ -2,7 +2,8 @@
    Warm plaster walls, green wainscot, tiled floor, night windows, white tablecloths. */
 (function(){
 var K=window.ReachKit,W=K.W,G=K.G,bx=K.bx,cy=K.cy,cn=K.cn,sp=K.sp,mesh=K.mesh,M=K.M,MB=K.MB,tex=K.tex,haloTex=K.haloTex,V=K.V,makeChar=K.makeChar,randLook=K.randLook,pk=K.pk;
-var RX=8.2,RZ=6.6,T={x:-2.6,z:-3.4};   // T = our table
+var RX=8.2,RZ=6.6,T={x:-2.6,z:-3.4};
+var TBL=[[4.5,-2,4],[-5.5,2.8,3],[3,3.4,4],[5.6,-4.6,3],[-1.2,2.4,2],[0.6,-0.6,3],[-6,-4.8,4],[1.4,-5,4],[-5.2,-0.6,2],[6.2,2.4,2]];   // T = our table
 function build(){
  var obst=[],sc=new THREE.Scene();sc.background=new THREE.Color(0x140f12);
  sc.add(new THREE.HemisphereLight(0xffe3c0,0x3a2418,.7));
@@ -27,7 +28,7 @@ function build(){
  // chandelier over our table, plus little fairy lights
  var halo=new THREE.SpriteMaterial({map:haloTex(),transparent:true,opacity:.65,depthWrite:false,blending:THREE.AdditiveBlending});
  function lamp(x,z,y){cy(sc,.012,5-y,0x222222,x,(5+y)/2,z);cy(sc,.5,.05,0x6b4a22,x,y,z);for(var i=0;i<6;i++){var a=i/6*Math.PI*2;sp(sc,.05,0xffe7b0,x+Math.cos(a)*.42,y+.07,z+Math.sin(a)*.42,MB(0xffe7b0))}var h=new THREE.Sprite(halo);h.scale.set(3,3,1);h.position.set(x,y,z);sc.add(h)}
- lamp(T.x,T.z,3.6);lamp(4.5,-2,3.7);lamp(-5.5,2.8,3.7);lamp(3,3.4,3.7);
+ lamp(T.x,T.z,3.6);lamp(4.5,-2,3.7);lamp(-5.5,2.8,3.7);lamp(3,3.4,3.7);lamp(-6,-4.8,3.7);lamp(1.4,-5,3.7);
  for(var i=0;i<28;i++){var fx=-RX+.7+i*.58;sp(sc,.035,0xffd98a,fx,4.35-Math.sin(i/27*Math.PI*3)*.0-.15*Math.abs(Math.sin(i*.55)),-RZ+.35,MB(0xffd98a))}
  // furniture
  var cloth=M(0xf6f0e4),dark=M(0x3a2a22),wood=M(0x6a3f22),flameM=MB(0xffd27a);
@@ -41,8 +42,7 @@ function build(){
  chair(T.x,T.z+.95,Math.PI);chair(T.x,T.z-.95,0);
  // set our table: two plates and glasses
  [[0,.42],[0,-.42]].forEach(function(p){cy(sc,.15,.012,0xffffff,T.x+p[0],.8,T.z+p[1]);sp(sc,.03,0xb8323f,T.x+p[0]-.18,.85,T.z+p[1],MB(0xcf4f5f))});
- var tbl=[[4.5,-2,4],[-5.5,2.8,2],[3,3.4,4],[5.6,-4.6,2],[-1.2,2.4,2],[0.6,-0.6,3]];
- tbl.forEach(function(t){table(t[0],t[1],t[2],false)});
+ TBL.forEach(function(t){table(t[0],t[1],t[2],false)});
  // host stand near the door, wine wall on the left, plants
  bx(sc,1.6,1.05,.6,0,-4.6,.52,RZ-.6,wood);bx(sc,1.7,.06,.7,0,-4.6,1.07,RZ-.6,M(0xd9b45a));obst.push({t:'b',x1:-5.4,x2:-3.8,z1:RZ-.95,z2:RZ-.25});
  bx(sc,.5,3,4.6,0,-RX+.35,1.5,-1.2,M(0x3a2218));
@@ -64,7 +64,9 @@ function setup(){
  // other diners (lower detail), seated at the other tables
  function diners(x,z,n,w){for(var i=0;i<n;i++){var a=i/n*Math.PI*2,c=makeChar(randLook(w!==undefined?w:Math.random()<.5));c.seat=true;c.g.position.set(x+Math.cos(a)*.95,-.45,z+Math.sin(a)*.95);
    c.g.rotation.y=Math.atan2(-Math.cos(a),-Math.sin(a));W.dyn.add(c.g);W.npcs.push({c:c,st:pk(['talk','drink','talk']),t0:Math.random()*10})}}
- diners(4.5,-2,2);diners(-5.8,-4.6,2);diners(-0.4,-5.2,2);diners(-5.5,2.8,2);diners(3,3.4,3);diners(5.6,-4.6,2);diners(-1.2,2.4,2);
+ TBL.forEach(function(t,i){diners(t[0],t[1],t[2])});
+ // people waiting by the door, and a couple of servers
+ [[-3.2,RZ-1.2,Math.PI*.9],[-2.6,RZ-1.5,Math.PI*1.1],[3.6,RZ-1.2,Math.PI]].forEach(function(p){var c=makeChar(randLook(Math.random()<.5));c.g.position.set(p[0],0,p[1]);c.g.rotation.y=p[2];W.dyn.add(c.g);W.npcs.push({c:c,st:pk(['idle','talk','phone']),t0:Math.random()*10})});
  // a waiter with a route between tables
  var wt=makeChar(randLook(Math.random()<.5));wt.g.position.set(1.5,0,0);W.dyn.add(wt.g);
  W.npcs.push({c:wt,wander:true,wp:[V(1.5,0,-0.6),V(6,0,1),V(2,0,5),V(-2,0,5),V(-3.4,0,0.8),V(2.6,0,-3.2)],wi:0,pause:1,t0:0});

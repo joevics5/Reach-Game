@@ -38,5 +38,5 @@ function setup(){
  var col=makeChar(Object.assign(randLook(false),{lod:'lo'}));col.g.position.set(2.6,0,-1.6);col.g.rotation.y=Math.PI;W.dyn.add(col.g);W.npcs.push({c:col,st:'idle',t0:1});
 }
 function talkCam(){var a=W.orb*.5,r=3.9;return {px:C.x+Math.cos(a)*r,py:1.55,pz:C.z+Math.sin(a)*r*.9,tx:C.x,ty:1.3,tz:C.z}}
-K.scenes.reg('electronics',{rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:talkCam});
+K.scenes.reg('electronics',{fill:{n:4,pairs:2},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:talkCam});
 })();
