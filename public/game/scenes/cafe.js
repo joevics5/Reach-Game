@@ -26,10 +26,10 @@ function build(){var obst=[],sc=new THREE.Scene();sc.background=new THREE.Color(
  [-5.8,5.8].forEach(function(x){cy(sc,.3,.5,0xb85a3a,x,.25,-3);sp(sc,.5,0x3a9a4a,x,.9,-3)});
  return {scene:sc,obst:obst}}
 function setup(){
- K.player(0,-1.6,0,0);
+ K.player(0,2.5,Math.PI,0);
  // the three women at the round table, facing in; the chair you are offered is empty on the near side
  K.person(G.cast[0],{x:-.65,y:-.45,z:.5,h:Math.PI/2,seat:1,st:"idle"});
- chair(K.W.dyn,0,-.3,Math.PI,0xb88a58);
+ chair(K.W.dyn,0,1.75,Math.PI,0xb88a58);
  guests([[.55,.95,-Math.PI/2*1.0-.3,1],[.55,.05,-Math.PI/2+.3,1,1]]);
  guests([[-4.5-.9,-.5,Math.PI/2,1],[-4.5+.9,-.5,-Math.PI/2,1,1],[4.4-.9,1.6,Math.PI/2,1]]);
 }

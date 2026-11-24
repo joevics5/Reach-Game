@@ -36,7 +36,8 @@ var ARCH=[
  {id:'busy',label:'The Busy Professional',d:'Short on time, keeps checking the clock, appreciates directness.',w:2,b:-4},
  {id:'independent',label:'The Independent One',d:'Appreciates confidence, hates presumption or anyone trying to control the conversation.',w:2,b:0},
  {id:'hard',label:'The Hard-to-Impress',d:'Sceptical, has heard every line, needs real engagement before showing any interest.',w:2,b:-8},
- {id:'warm',label:'The Warm Friendly One',d:'Naturally chatty and kind but does not mean romantic interest by it. May politely keep things friendly.',w:2,b:-6}
+ {id:'warm',label:'The Warm Friendly One',d:'Naturally chatty and kind but does not mean romantic interest by it. May politely keep things friendly.',w:2,b:-6},
+ {id:'dry',label:'The Dry-Witted One',d:'Deadpan humour, understated, enjoys people who can banter back without trying too hard. Slow to show warmth but remembers details.',w:2,b:-2}
 ];
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function pickArch(){var t=[];ARCH.forEach(function(a){for(var i=0;i<a.w;i++)t.push(a)});return pk(t)}
@@ -290,14 +291,15 @@ function showPart(i){
 }
 function showContacts(){
  var ch=G.ch,L=$('log');$('comp').hidden=true;$('acts').hidden=true;$('timebox').hidden=true;
- L.innerHTML='<div class="pre"><b>The group chat.</b> '+esc(G.cast.length)+' people are in it tonight. Pick one to message privately.</div><div id="contacts" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>';
+ $('chname').innerHTML='<span class="av">#</span>Friday Night Crew';$('chsub').textContent=G.cast.length+' members';
+ L.innerHTML='<div class="m sys">The group has been chatting all evening. Pick someone to message privately.</div><div id="contacts"></div>';
  var box=$('contacts');
  G.cast.forEach(function(p,i){
-  var b=document.createElement('button');b.className='ghost';b.style.cssText='display:flex;align-items:center;gap:8px;text-align:left;padding:8px 12px';
-  b.innerHTML='<span class="av" style="display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#1a1208;font-weight:700">'+esc(p.name.charAt(0))+'</span><span><b>'+esc(p.name)+'</b><br><small style="opacity:.7">'+esc((p.arch.label||'').replace(/^The /,''))+'</small></span>';
+  var b=document.createElement('button');b.className='contact';
+  b.innerHTML='<span class="av">'+esc(p.name.charAt(0))+'</span><span class="cn"><b>'+esc(p.name)+'</b><small>'+esc((p.arch.label||'').replace(/^The /,''))+'</small></span>';
   b.addEventListener('click',function(){
    G.p=p;G.cur={interest:p.interest,comfort:p.comfort,patience:p.patience};
-   var t=fillT(ch.pre,p).split('. ');G.pre2='<div class="pre"><b>'+esc(t[0])+'.</b> '+esc(t.slice(1).join('. '))+'</div>';
+   var t=fillT(ch.pre,p).split('. ');G.pre2='<div class="m sys">'+esc(t[0])+'. '+esc(t.slice(1).join('. '))+'</div>';
    $('msg').placeholder=fillT(ch.placeholder||'Say something',p);
    beginChat();
   });
@@ -308,7 +310,7 @@ function beginChat(){
  var ch=G.ch;G.status='talk';$('back').hidden=true;G.rules=rules(G.p,G.me,G.guide,'');
  $('chname').innerHTML='<span class="av">'+esc(G.p.name.charAt(0))+'</span>'+esc(G.p.name);$('chsub').textContent=ch.chat.who||'';
  $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
- $('log').innerHTML=G.pre2;cueLine(sceneCue());
+ $('log').innerHTML=G.pre2;
  if(G.guide){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(ch.hint||'Listen to the answers and build on them.')}
  setTimeout(function(){try{$('msg').focus({preventScroll:true})}catch(e){}},50);
 }
@@ -583,7 +585,7 @@ async function send(){
  entry.a=JSON.stringify({say:r.say,cue:r.cue,interest:r.interest,comfort:r.comfort,patience:r.patience,end:r.end});
  G.cur={interest:r.interest,comfort:r.comfort,patience:r.patience};
  G.notes.push({u:txt,say:r.say,cue:r.cue,tag:r.tag,quality:r.quality,note:r.note});
- if(r.cue)cueLine(r.cue);
+ if(r.cue&&(G.ch.mode!=='chat'||r.end))cueLine(r.cue);
  if(r.say)addMsg('her',r.say);
  setHer(r);
  if(G.guide&&r.hint){var h=$('hint');h.hidden=false;h.innerHTML='<b>Coach</b>'+esc(r.hint)}
@@ -1095,7 +1097,7 @@ function updCam(dt){
   px=pos.x-fx2*4.6;py=3.1;pz=pos.z-fz2*4.6;tx=pos.x+fx2*2.2;ty=1.1;tz=pos.z+fz2*2.2;
  }
  var B=W.bounds;px=clamp(px,-B.rx+.5,B.rx-.5);pz=clamp(pz,-B.rz+.5,B.rz-.5);
- if(G.status==='explore'){var dd=Math.hypot(px-pos.x,pz-pos.z);if(dd<4){py=Math.min(py+(4-dd)*.4,4.6);ty+=(4-dd)*.15}} /* against a wall the camera rises instead of sitting on the player's head */
+ if(G.status==='explore'){var dd=Math.hypot(px-pos.x,pz-pos.z);if(dd<4){py=Math.min(py+(4-dd)*.4,3.3);ty+=(4-dd)*.15}} /* against a wall the camera rises instead of sitting on the player's head */
  var k=1-Math.exp(-dt*4.5);
  cam.position.x+=(px-cam.position.x)*k;cam.position.y+=(py-cam.position.y)*k;cam.position.z+=(pz-cam.position.z)*k;
  W.look.x+=(tx-W.look.x)*k;W.look.y+=(ty-W.look.y)*k;W.look.z+=(tz-W.look.z)*k;

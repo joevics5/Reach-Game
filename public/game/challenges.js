@@ -43,13 +43,13 @@ var TEXT_AI={
 };
 
 var DATE_AI={
- intro:'The player is on a first date with you.',
+ intro:'The player is meeting you on a blind date: a mutual friend set you up and you have never met.',
  scene:function(p){return 'SCENE: Rosa\'s, a small candlelit restaurant, about 8pm on a Saturday. You and the player are sitting at a table for two. You are '+p.circ+'. You agreed to this date, so you are open to a good evening but you decide honestly how it goes. Your mood: '+p.mood+'.'},
  style:'Talk like a real person on a first date',
- win:'This is a first date. There is no number to give and no deal to close: you judge the whole evening. "end" must be null until the final turn. Never set "won" before the last two turns. At the final turn the evening ends (the bill, the walk out) and you decide honestly how it went: set "won" only if you really enjoyed yourself, your interest is at least 70 and comfort at least 65; otherwise set "declined" (polite, pleasant, not interested in a second date). Set "left" only if the player is rude, crude or makes you uncomfortable and you leave the table. Never write digits or a real phone number.',
+ win:'This is a blind date and the player\'s goal is to get you to agree to a second date. There is no number to give: you judge the whole evening, and you only agree to a second date if you truly want one. The player has to earn it and should ask (or you may offer it yourself, only if you are clearly delighted). "end" must be null until the final turn. Never set "won" before the last two turns. At the final turn the evening ends (the bill, the walk out) and you decide honestly how it went: set "won" only if you really enjoyed yourself, your interest is at least 70 and comfort at least 65 AND you clearly agree to a second date in your closing words; otherwise set "declined" (polite and pleasant, but no second date). Set "left" only if the player is rude, crude or makes you uncomfortable and you leave the table. Never write digits or a real phone number.',
  wrap:function(T){return 'Each player message is marked with its turn number out of '+T+'. The meal moves on: starters arrive early, mains around turn 6, dessert around turn 11, the bill near turn '+(T-1)+'. At turn '+T+' you must end the evening.'},
- review:'a first date at a restaurant',
- how:{won:'she or he had a good evening and would see the player again',declined:'the evening was pleasant but she or he did not want a second date',left:'the character left the table because of discomfort or pushiness',timeout:'the evening ran out',player_left:'the player left the table'}
+ review:'a blind date at a restaurant',
+ how:{won:'she or he agreed to a second date',declined:'the evening was pleasant but she or he did not agree to a second date',left:'the character left the table because of discomfort or pushiness',timeout:'the evening ran out',player_left:'the player left the table'}
 };
 
 
@@ -77,12 +77,12 @@ var D={
     pre:'Look around. You just walked in. Five {people} are out tonight, each on their own. Choose who you want to talk to, walk over when you are ready, then tap Talk.',
     circs:['waiting for a friend who is running late','having a quiet drink after a long week','celebrating a small win alone before friends turn up','killing time before a train','half-watching the match on the TV','reading on a phone with a drink'],
     cast:{n:5},go:'Walk in',placeholder:'Say something to {her}',leave:'Walk away'}),
-  C('The Date','Restaurant',2,'Have a good conversation throughout the evening and make it an experience she or he enjoys. She or he decides at the end.',{scene:'restaurant',mode:'seated',picker:{me:true,target:true},custom:true,maxT:16,ai:DATE_AI,winScore:70,minWinTurn:15,
-    situation:'It is Saturday evening at Rosa\'s, a small candlelit restaurant. You are sitting at a table for two on a first date. There is no number to ask for and nothing to close: the goal is a good evening. At the end, she or he decides honestly how it went.',
-    chat:{name:'Rosa\'s',sub:'Candlelit table for two.',who:'Your date'},
-    pre:'You have just sat down. {Name} is across the table. Say hello and see where the evening goes. There is no hurry: the meal will carry the night.',
+  C('The Blind Date','Restaurant',2,'Get her or him to agree to a second date.',{scene:'restaurant',mode:'seated',picker:{me:true,target:true},custom:true,maxT:16,ai:DATE_AI,winScore:70,minWinTurn:15,
+    situation:'It is Saturday evening at Rosa\'s, a small candlelit restaurant. A friend set you up on a blind date and you have never met. You are sitting at a table for two. There is no number to ask for: the goal is a good enough evening that she or he genuinely agrees to a second date. They decide honestly.',
+    chat:{name:'Rosa\'s',sub:'Blind date. Candlelit table for two.',who:'Your date'},
+    pre:'You have just sat down for a blind date. {Name} is across the table and you have never met. Say hello and see where the evening goes. There is no hurry: the meal will carry the night.',
     circs:['arrived a few minutes early and ordered water','is glad to be out after a long week','is a little nervous but hiding it well','came straight from work and is still unwinding'],
-    hint:'Ask about their life and answer what they ask. A date is a back and forth, not an interview.',openCue:function(p){return p.name+' looks up with a small smile as you sit down.'},timeoutCue:function(p){return 'The bill arrives and the evening comes to an end.'},cast:{n:1},go:'Take your seat',placeholder:'Say something to {her}',leave:'Leave the table'}),
+    hint:'Ask about their life and answer what they ask. A date is a back and forth, not an interview. If it is going well, ask about seeing them again before the evening ends.',openCue:function(p){return p.name+' looks up with a small smile as you sit down.'},timeoutCue:function(p){return 'The bill arrives and the evening comes to an end.'},cast:{n:1},go:'Take your seat',placeholder:'Say something to {her}',leave:'Leave the table'}),
   C('The Last Bus','Bus stop',2,'Have an enjoyable chat and agree a date and a time before her bus arrives.',{scene:'busstop',mode:'seated',picker:{me:true,target:true},custom:true,maxT:10,ai:BUS_AI,
     situation:'It is a quiet weeknight about 10:40pm at a bus stop. You are waiting for the same last bus as a stranger. You only have a few minutes. The goal: have a good chat and agree a day and a time to meet again before the bus comes.',
     chat:{name:'Bus stop',sub:'Late. A quiet street.',who:'At the bus stop'},

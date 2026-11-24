@@ -160,9 +160,43 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .pgoal b{color:var(--amber)}
 .av{display:inline-grid;place-items:center;width:30px;height:30px;margin-right:9px;border-radius:50%;background:var(--amber);color:var(--amber-ink);font:800 14px var(--f-display);vertical-align:middle}
 #s-play.phonemode .stage{display:none}
-#s-play.phonemode .play{grid-template-columns:1fr;justify-items:center}
-#s-play.phonemode .chat{width:min(430px,100%);height:min(80vh,720px);max-height:none;border:7px solid #1d1726;border-radius:38px;box-shadow:0 14px 40px rgba(0,0,0,.5);overflow:hidden;background:#0f0c15}
-#s-play.phonemode .ch-h{padding-top:14px}
-#s-play.phonemode .m.me{background:#2a7ad8;color:#fff}
-#s-play.phonemode .m.her{background:#2a2f3a;color:#f2f2f6}
-#s-play.phonemode .m.cue{font-size:12px}
+#s-play.phonemode .play{grid-template-columns:1fr;justify-items:center;perspective:1600px;padding-top:8px}
+/* a standalone phone: titanium frame, dynamic island, status bar, home bar, a light messaging app inside */
+#s-play.phonemode .chat{position:relative;width:min(390px,100%);height:min(82vh,780px);max-height:none;min-height:520px;border:11px solid #17171c;border-radius:54px;overflow:hidden;background:#efe7dd;color:#111;
+ box-shadow:0 0 0 2px #4a4a54,0 0 0 4px #0c0c10,-6px 2px 0 4px #26262d,28px 44px 70px rgba(0,0,0,.6),inset 0 0 0 2px #000;
+ transform:rotateY(-9deg) rotateX(3deg);transform-style:preserve-3d;transition:transform .4s}
+#s-play.phonemode .chat:hover{transform:rotateY(-3deg) rotateX(1deg)}
+#s-play.phonemode .chat::before{content:"";position:absolute;z-index:6;top:9px;left:50%;transform:translateX(-50%);width:104px;height:28px;border-radius:20px;background:#000}
+#s-play.phonemode .chat::after{content:"";position:absolute;z-index:6;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:5px;border-radius:3px;background:#111;opacity:.85}
+#s-play.phonemode .ch-h{background:#075e54;color:#fff;padding:46px 16px 11px;border:0;position:relative}
+#s-play.phonemode .ch-h::before{content:"9:41";position:absolute;top:15px;left:26px;font:700 13px var(--f-body,system-ui);color:#fff}
+#s-play.phonemode .ch-h::after{content:"5G  \25AE\25AE\25AE  100%";position:absolute;top:15px;right:24px;font:700 11px var(--f-body,system-ui);color:#fff;letter-spacing:.5px}
+#s-play.phonemode .ch-h b{color:#fff}
+#s-play.phonemode .ch-h .sub{color:#c8ece6}
+#s-play.phonemode .ch-h .av{background:#25d366;color:#04301f}
+#s-play.phonemode .pgoal{background:#fff7cf;color:#4a3d00;border-bottom:1px solid #e9dfa6}
+#s-play.phonemode .pgoal b{color:#7a5a00}
+#s-play.phonemode .log{background:#efe7dd radial-gradient(rgba(0,0,0,.045) 1px,transparent 1.4px) 0 0/16px 16px;color:#111}
+#s-play.phonemode .m{box-shadow:0 1px 1px rgba(0,0,0,.13);font-size:15px}
+#s-play.phonemode .m.me{background:#d9fdd3;color:#111;border-bottom-right-radius:4px}
+#s-play.phonemode .m.her{background:#fff;color:#111;border-bottom-left-radius:4px}
+#s-play.phonemode .m.cue{font-size:12px;box-shadow:none}
+#s-play.phonemode .m.sys{background:#fff3c4;color:#5a4a10;box-shadow:none;border-radius:8px;padding:6px 10px}
+#s-play.phonemode .typing{background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.13)}
+#s-play.phonemode .typing i{background:#8a8a8a}
+#s-play.phonemode .comp{background:#f0f0f0;border-top:0;padding:8px 10px 22px}
+#s-play.phonemode .comp textarea{background:#fff;color:#111;border:0;border-radius:22px;padding:10px 14px}
+#s-play.phonemode .comp button{background:#075e54;color:#fff;border:0;border-radius:50%}
+#s-play.phonemode .comp button svg{fill:#fff}
+#s-play.phonemode #acts{background:#f0f0f0;padding:6px 12px 0}
+#s-play.phonemode #acts button{background:#fff;color:#555;border:1px solid #d5d5d5}
+#s-play.phonemode #hint{background:#fff7cf;color:#4a3d00;border-color:#e9dfa6}
+#s-play.phonemode .err{background:#f0f0f0;color:#c0392b}
+#contacts{display:flex;flex-direction:column;background:#fff;border-radius:12px;margin-top:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+#contacts .contact{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;color:#111;border:0;border-bottom:1px solid #eee;text-align:left;cursor:pointer;font:inherit}
+#contacts .contact:last-child{border-bottom:0}
+#contacts .contact:hover,#contacts .contact:focus-visible{background:#f0f7f4;outline:none}
+#contacts .contact .av{margin:0;width:38px;height:38px;background:#25d366;color:#04301f}
+#contacts .contact .cn{display:flex;flex-direction:column}
+#contacts .contact small{color:#667;font-size:12px}
+@media (max-width:640px){#s-play.phonemode .chat{transform:none;border-width:8px;border-radius:40px;height:calc(100vh - 150px)}#s-play.phonemode .chat:hover{transform:none}}
