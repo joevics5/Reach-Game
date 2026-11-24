@@ -30,18 +30,18 @@ export const MARKUP = `<div class="app">
 
   <section class="screen" id="s-play" hidden>
     <div class="play">
-      <div class="stage" id="stage">
+      <div class="stagecol"><div class="stage" id="stage">
         <canvas id="gl" aria-label="3D bar"></canvas>
-        <div class="goal"><div class="g" id="goal"></div><div class="badge" id="gbadge"></div></div>
+        <div class="goal"><button class="sback" id="sback">‹ Back</button><div class="badge" id="gbadge"></div></div>
         <button id="talk">Talk</button>
         <div id="joy" aria-label="Move"><i></i></div>
         <div class="tip" id="tip">Drag to move. Swipe the view to look around.</div>
-      </div>
+      </div><div class="goalbar" id="goal"></div></div>
       <div class="chat" id="chat">
         <div class="ch-h"><div><b id="chname">The bar</b><div class="sub" id="chsub"></div></div><div class="time" id="timebox" hidden><small>Time</small><div class="prog"><i id="timebar"></i></div></div></div>
-        <div class="pgoal" id="pgoal" hidden></div>
         <div class="log" id="log"></div>
         <div class="hint" id="hint" hidden></div>
+        <div class="pgoal" id="pgoal" hidden></div>
         <div class="err" id="err" hidden></div>
         <div class="acts" id="acts" hidden><button class="ghost" id="walkaway">Walk away</button><span class="note" id="micnote"></span></div>
         <div class="comp" id="comp" hidden>

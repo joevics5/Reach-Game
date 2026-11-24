@@ -28,5 +28,5 @@ function setup(){
  K.player(-.7,-1.5,0,0);
  K.person(G.cast[0],{x:.4,y:0,z:-1.5,h:0,seat:0,st:"phone"});
 }
-K.scenes.reg("busstop",{fill:{n:4,pairs:1,wander:2},side:true,rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-1.5,3.2,1.5,1.2,1.3),talkLimitZ:-1});
+K.scenes.reg("busstop",{open:true,fill:{n:4,pairs:1,wander:2},side:true,rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-1.5,3.2,1.5,1.2,1.3),talkLimitZ:-1});
 })();

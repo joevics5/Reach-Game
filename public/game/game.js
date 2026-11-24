@@ -146,7 +146,7 @@ var G={screen:'dash',cat:null,id:null,me:'man',target:'woman',guide:false,adult:
 function show(name){
  G.screen=name;
  ['dash','list','brief','play','review','settings'].forEach(function(s){$('s-'+s).hidden=(s!==name)});
- var b=$('back');b.hidden=(name==='dash'||name==='review'||(name==='play'&&G.status==='talk'));
+ var b=$('back');b.hidden=(name==='dash'||name==='review'||(name==='play'&&!(G.ch&&G.ch.mode==='chat')));
  $('gear').hidden=(name==='play'||name==='settings');
  if(name==='play'&&!(G.ch&&G.ch.mode==='chat')){startRender();resize()}else stopRender();
  window.scrollTo(0,0);
@@ -155,8 +155,14 @@ $('back').addEventListener('click',function(){
  if(G.screen==='settings')show(G.prevScreen||'dash');
  else if(G.screen==='list')show('dash');
  else if(G.screen==='brief')openList(G.cat);
- else if(G.screen==='play'){cancelMic();stopRender();openList(G.cat)}
+
+ else if(G.screen==='play')leavePlay();
 });
+function leavePlay(){
+ if(G.status==='talk'&&G.turn>0&&!window.confirm('Leave this challenge? Your conversation so far will be lost.'))return;
+ cancelMic();stopRender();openList(G.cat);
+}
+$('sback').addEventListener('click',leavePlay);
 /* ---------- settings ---------- */
 function renderSettings(){
  var st=window.ReachAI.load(),opts=window.ReachAI.MODELS.map(function(m){return '<option value="'+m+'">'}).join('');
@@ -307,7 +313,7 @@ function showContacts(){
  });
 }
 function beginChat(){
- var ch=G.ch;G.status='talk';$('back').hidden=true;G.rules=rules(G.p,G.me,G.guide,'');
+ var ch=G.ch;G.status='talk';G.rules=rules(G.p,G.me,G.guide,'');
  $('chname').innerHTML='<span class="av">'+esc(G.p.name.charAt(0))+'</span>'+esc(G.p.name);$('chsub').textContent=ch.chat.who||'';
  $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
  $('log').innerHTML=G.pre2;
@@ -895,7 +901,7 @@ K.player=function(x,z,h,y){
  if(seatedMode){var st0=W.S.start||{x:0,z:W.S.rz-1.1,h:Math.PI};W.spot={x:x,z:z,h:h,y:y||0};x=st0.x;z=st0.z;h=st0.h;y=0}
  var meLook=randLook(G.me==='woman');meLook.sh=0xF7B500;meLook.pn=0x1b3a5c;meLook.dress=false;meLook.top='tee';meLook.bottom='jeans';meLook.style=G.me==='woman'?'long':'short';meLook.beard=false;meLook.glasses=false;
  meLook.lod='hi';W.me=makeChar(meLook);W.meY=y||0;W.me.seat=!!y;W.me.g.position.set(x,W.meY,z);W.me.g.rotation.y=h;W.dyn.add(W.me.g);W.mePos=V(x,0,z);W.meH=h;
- var nm=nameSprite('You',true);nm.scale.set(1.2,.3,1);nm.position.set(0,2.3,0);nm.renderOrder=20;W.me.g.add(nm);return W.me;
+ var nm=nameSprite('You',true);nm.scale.set(1.2,.3,1);nm.position.set(0,2.3,0);nm.renderOrder=20;W.me.g.add(nm);W.meTag=nm;return W.me;
 };
 K.person=function(gp,sl){
  gp.look.lod='hi';var c=makeChar(gp.look);c.seat=!!sl.seat;c.moodT=.1;
@@ -1096,9 +1102,10 @@ function updCam(dt){
   var h=W.cyaw+W.orb,fx2=Math.sin(h),fz2=Math.cos(h);
   px=pos.x-fx2*4.6;py=3.1;pz=pos.z-fz2*4.6;tx=pos.x+fx2*2.2;ty=1.1;tz=pos.z+fz2*2.2;
  }
- var B=W.bounds;px=clamp(px,-B.rx+.5,B.rx-.5);pz=clamp(pz,-B.rz+.5,B.rz-.5);
+ var B=W.bounds,ex=(W.S&&W.S.open)?3.5:-.5;px=clamp(px,-B.rx-ex,B.rx+ex);pz=clamp(pz,-B.rz-ex,B.rz+ex);
  if(G.status==='explore'){var dd=Math.hypot(px-pos.x,pz-pos.z);if(dd<4){py=Math.min(py+(4-dd)*.4,3.3);ty+=(4-dd)*.15}} /* against a wall the camera rises instead of sitting on the player's head */
  var k=1-Math.exp(-dt*4.5);
+ if(W.meTag)W.meTag.visible=Math.hypot(cam.position.x-pos.x,cam.position.z-pos.z)>2.4;
  cam.position.x+=(px-cam.position.x)*k;cam.position.y+=(py-cam.position.y)*k;cam.position.z+=(pz-cam.position.z)*k;
  W.look.x+=(tx-W.look.x)*k;W.look.y+=(ty-W.look.y)*k;W.look.z+=(tz-W.look.z)*k;
  cam.lookAt(W.look);

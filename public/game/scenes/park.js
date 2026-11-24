@@ -28,5 +28,5 @@ function setup(){
  // the two friends with a ball, and passers-by
  guests([[5.2,4.5,-2.4,0],[6.3,5.6,-2.7,0,1],[-5,3,1.2,0],[-6,2.6,-1,0,1]]);
 }
-K.scenes.reg("park",{fill:{n:7,pairs:3,wander:4},side:true,rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-1.3,3.2,1.3,1.0,1.1),talkLimitZ:-1});
+K.scenes.reg("park",{open:true,fill:{n:7,pairs:3,wander:4},side:true,rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-1.3,3.2,1.3,1.0,1.1),talkLimitZ:-1});
 })();

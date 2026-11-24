@@ -27,5 +27,5 @@ function setup(){
  K.person(G.cast[0],{x:0,y:.12,z:-RZ+1.6,h:Math.PI,seat:0,st:"idle"});
  guests([[5.5,3,-2.5,0],[-5.5,2,2,0,1]]);
 }
-K.scenes.reg("doorstep",{fill:{n:3,pairs:1,wander:2},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-RZ+2.3,3.4,1.5,1.3,.35),talkLimitZ:-RZ+2.4});
+K.scenes.reg("doorstep",{open:true,fill:{n:3,pairs:1,wander:2},rx:RX,rz:RZ,exit:{x:0,z:RZ+.8},build:build,setup:setup,talkCam:cam(0,-RZ+2.3,3.4,1.5,1.3,.35),talkLimitZ:-RZ+2.4});
 })();
