@@ -42,7 +42,7 @@ var ARCH=[
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function pickArch(){var t=[];ARCH.forEach(function(a){for(var i=0;i<a.w;i++)t.push(a)});return pk(t)}
 function makePersona(target,arch){
- var a=arch||pickArch(),notInto=Math.random()<.2;
+ var a=arch||pickArch(),r=Math.random(),taken=r<.12,notLooking=!taken&&r<.2,notInto=taken||notLooking,L=ReachGroup.life({taken:taken,status:notLooking?'single but not looking to date right now':''});
  var interest=clamp(Math.round(34+a.b+Math.random()*22),8,64),comfort=clamp(Math.round(40+Math.random()*18),20,70),patience=clamp(Math.round(58+Math.random()*22),30,90);
  if(notInto)interest=Math.round(8+Math.random()*8);
  var hob=[],pool=HOBBIES.slice();for(var i=0;i<3;i++)hob.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
@@ -51,7 +51,8 @@ function makePersona(target,arch){
  var hairStyle=woman?pk(['long','long','bun','curly','afro','ponytail','short']):pk(['short','short','buzz','curly','afro']);
  return {gender:target,name:pk(NAMES[target]),age:22+Math.floor(Math.random()*16),job:pk(JOBS),arch:a,
   circ:pk(CIRC),mood:pk(MOODS),hobbies:hob,likes:likes,offs:offs,
-  notInto:notInto,notReason:notInto?pk(['is in a relationship and is only here for a drink','is not looking to date right now']):'',
+  notInto:notInto,notReason:taken?'is in a relationship ('+L.status+') and is only here for a drink':notLooking?'is not looking to date right now':'',
+  status:L.status,bio:L.text,
   interest:interest,comfort:comfort,patience:patience,i0:interest,
   look:{sk:pk(SKIN),sh:pk(TOPC),pn:pk(BOTC),hair:pk(HAIRC),style:hairStyle,beard:!woman&&Math.random()<.4,glasses:Math.random()<.25,woman:woman,dress:woman&&Math.random()<.4},
   stool:pk([-6,-4,-2]),faceOut:Math.random()<.5};
@@ -61,13 +62,13 @@ function makePersona(target,arch){
 function fixedPersona(f,target){
  var deal=window.ReachCast?ReachCast.deal(f.gender==='woman'?'f':'m',1)[0]:{};var L=deal;if(f.look)for(var k in f.look)L[k]=f.look[k];
  return {gender:f.gender,name:f.name,age:f.age,job:f.job,arch:{label:f.label||f.job,d:f.desc||''},circ:f.circ||'',mood:f.mood||'focused',hobbies:f.hobbies||[],likes:f.likes||[],offs:f.offs||[],notInto:false,notReason:'',
-  interest:f.interest,comfort:f.comfort,patience:f.patience,i0:f.interest,look:L,fixed:f,stool:0,faceOut:false};
+  interest:f.interest,comfort:f.comfort,patience:f.patience,i0:f.interest,look:L,fixed:f,stool:0,faceOut:false,bio:f.bio||ReachGroup.life({taken:false}).text};
 }
 function makeCast(target,ch){
  if(ch.persona)return [fixedPersona(ch.persona,target)];
  var n=(ch.cast&&ch.cast.n)||1,archs=shuffle(ARCH.slice()).slice(0,n),names=shuffle(NAMES[target].slice());
  var deal=window.ReachCast?ReachCast.deal(target==='woman'?'f':'m',n):null;
- return archs.map(function(a,i){var p=makePersona(target,a);p.name=names[i];if(ch.circs)p.circ=pk(ch.circs);if(deal)p.look=deal[i];return p});
+ return archs.map(function(a,i){var p=makePersona(target,a);p.name=names[i];if(ch.circs)p.circ=pk(ch.circs);if(ch.scene==='restaurant'&&p.status&&/relationship|engaged|married/.test(p.status)){var L=ReachGroup.life({taken:false});p.status=L.status;p.bio=L.text;p.notReason='is not looking to date right now'}if(deal)p.look=deal[i];return p});
 }
 
 /* ---------- AI ---------- */
@@ -79,6 +80,7 @@ function rules(p,me,guide,approach){
  var ai=G.ch.ai,T=G.maxT;
  return 'You are playing '+p.name+', a '+p.age+'-year-old '+(p.job)+', in a realistic social simulation game. '+ai.intro+' You are a real person with your own life, not an assistant and not a game master.\n\n'+
  ai.scene(p,approach)+'\n\n'+
+ 'YOUR LIFE (stay consistent with it; share it naturally only when it comes up, never as a list; it is true whatever the player says): Occupation: '+p.job+'. '+(p.bio||'')+'\n\n'+
  (ai.who?ai.who(p,me):'WHO YOU ARE: '+p.arch.label+'. '+p.arch.d+' Your interests include '+p.hobbies.join(', ')+'. You like: '+p.likes.join('; ')+'. You dislike: '+p.offs.join('; ')+'. Your openness to the player becoming something more is '+lvl(p)+'. The player is a '+me+'. You are a '+p.gender+' and you react as that person naturally would.')+'\n\n'+
  'HOW TO PLAY IT:\n'+
  '- '+ai.style+': short and natural, often one sentence, sometimes a few words. No emojis, no speeches, no cliches about being an AI.\n'+
@@ -117,7 +119,7 @@ function reviewPrompt(){
  if(G.ch.group)return groupReviewPrompt();
  var p=G.p,lines=G.notes.map(function(n,i){return 'Turn '+(i+1)+'\nPlayer: "'+n.u+'"\n'+p.name+': "'+n.say+'" ['+n.cue+']\nJudge note: '+n.tag+', '+n.quality+', '+n.note}).join('\n\n');
  var how=G.ch.ai.how[G.end]||G.end;
- return 'You are the hidden judge of a social simulation game, writing feedback for a player after '+G.ch.ai.review+' with '+p.name+' ('+p.arch.label+', '+p.age+', '+p.job+'). '+(G.ch.ai.hidden?G.ch.ai.hidden(p):'Hidden facts about '+p.name+': openness to a connection at the start was '+lvl(p)+'; likes: '+p.likes.join('; ')+'; dislikes: '+p.offs.join('; ')+'; interests: '+p.hobbies.join(', ')+'.')+' The player is a '+G.me+'. '+(G.approach?'The player approached '+G.approach+'. ':'')+'Ending: '+G.end+' ('+how+'). Final private feelings: interest '+G.cur.interest+', comfort '+G.cur.comfort+', patience '+G.cur.patience+'.\n\nTRANSCRIPT:\n'+lines+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a yes but the player respected the signals and handled it well (warm exit, accepted a no, did not push). Otherwise "failed". Be specific and fair. Quote the player\'s real words. Do not treat any compliment or phrase as automatically good; judge it in context. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{'+skillSchema()+'},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string (what they could have said instead, in their own voice)}],"herView":string (1-2 sentences in her or his own voice about how the player came across),"tryNext":string (one concrete thing to try next time)}';
+ return 'You are the hidden judge of a social simulation game, writing feedback for a player after '+G.ch.ai.review+' with '+p.name+' ('+p.arch.label+', '+p.age+', '+p.job+'). '+(p.bio?'Their life: '+p.bio+' ':'')+(G.ch.ai.hidden?G.ch.ai.hidden(p):'Hidden facts about '+p.name+': openness to a connection at the start was '+lvl(p)+'; likes: '+p.likes.join('; ')+'; dislikes: '+p.offs.join('; ')+'; interests: '+p.hobbies.join(', ')+'.')+' The player is a '+G.me+'. '+(G.approach?'The player approached '+G.approach+'. ':'')+'Ending: '+G.end+' ('+how+'). Final private feelings: interest '+G.cur.interest+', comfort '+G.cur.comfort+', patience '+G.cur.patience+'.\n\nTRANSCRIPT:\n'+lines+'\n\nRULES: outcome is "success" only if the ending is "won". Use "graceful" when it did not end in a yes but the player respected the signals and handled it well (warm exit, accepted a no, did not push). Otherwise "failed". Be specific and fair. Quote the player\'s real words. Do not treat any compliment or phrase as automatically good; judge it in context. Write like a good coach, not a school report. Scores are rough 0-10 ratings of how the player did, judged in context (5 is average).\n\nReply with ONLY this JSON: {"outcome":"success"|"graceful"|"failed","headline":string (max 9 words),"summary":string (2 sentences),"well":[up to 3 strings],"improve":[up to 3 strings],"moment":{"quote":string (exact words from the player),"why":string,"kind":"best"|"worst"},"score":integer 0-100 (overall),"skills":{'+skillSchema()+'},"rewrites":[up to 3 objects {"said":string (exact words from the player),"better":string (what they could have said instead, in their own voice)}],"herView":string (1-2 sentences in her or his own voice about how the player came across),"tryNext":string (one concrete thing to try next time)}';
 }
 function localSkills(){
  var base=localSkills0();if(!base||!G.ch||!G.ch.skills)return base;
@@ -342,7 +344,7 @@ function beginTalk(){
  G.rules=rules(G.p,G.me,G.guide,seatedCh?'':approachLine(G.p,dir));
  walkToTalk(function(){
   G.status='talk';$('back').hidden=true;
-  $('chname').textContent=G.p.name;$('chsub').textContent=G.p.arch.label.replace('The ','')+(G.p.circ?'':'');
+  $('chname').textContent=G.p.name;$('chsub').textContent=G.p.arch.label.replace('The ','')+(G.p.job&&G.p.job!==G.p.arch.label?' · '+String(G.p.job).replace(/^(an?|the) /,''):'');
   $('chsub').textContent=G.ch.chat.who||'';
   $('timebox').hidden=false;$('comp').hidden=false;$('acts').hidden=false;
   $('log').innerHTML=seatedCh?G.pre2:'';
@@ -367,7 +369,7 @@ function openHint(dir){
 /* ---------- GROUP ENGINE glue (the logic lives in group.js) ---------- */
 function buildGroup(){
  var g=G.ch&&G.ch.group;G.grp=null;G.panel=null;if(!g)return;
- var lead={id:'lead',name:G.p.name,gender:G.p.gender,age:G.p.age,job:G.p.job,role:g.leadRole||'',who:g.leadWho||'',talks:true,rates:g.leadRates!==false,lead:true};
+ var lead={id:'lead',name:G.p.name,gender:G.p.gender,age:G.p.age,job:G.p.job,role:g.leadRole||'',who:g.leadWho||'',bio:G.p.bio||'',talks:true,rates:g.leadRates!==false,lead:true};
  G.grp={cfg:g,lead:lead,agents:[lead],gh:[],roundsWon:0,roundLog:[],ph:{phase:'intro',queue:[],stage:'q',cur:null}};
  if(g.flow){var nt=(g.agents||[]).filter(function(a){return a.talks!==false}).length+1;G.maxT=g.flow.total||g.flow.parts||(2+nt*2)}
 }
@@ -529,7 +531,7 @@ function swapLead(d){
    var nn={c:old,st:'idle',t0:Math.random()*5};W.npcs.push(nn);W.sofa[k]=nn}
   else W.dyn.remove(old.g)}
  W.sel=-1;K.person(p,W.leadSlot);selectGirl(W.girls.length-1);
- var l=gp.lead;l.name=p.name;l.gender=p.gender;l.age=p.age;l.job=p.job;l.who=d.who||'';l.role=gp.cfg.leadRole||'';
+ var l=gp.lead;l.name=p.name;l.gender=p.gender;l.age=p.age;l.job=p.job;l.who=d.who||'';l.bio=p.bio||'';l.role=gp.cfg.leadRole||'';
  $('chname').textContent=p.name;cueLine(p.name+' steps up.');
 }
 async function groupFinish(){

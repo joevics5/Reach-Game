@@ -16,6 +16,26 @@
     'distrusts anything that sounds rehearsed', 'is tired and wants it to be good and short', 'is supportive by nature but notices every cliche', 'values confidence and clear structure'];
   var JOBS = ['teacher', 'accountant', 'nurse', 'software developer', 'chef', 'electrician', 'lawyer', 'designer', 'student', 'retired engineer', 'shop owner', 'driver', 'journalist', 'physiotherapist', 'architect', 'musician'];
 
+
+  /* ---------- life details: every person gets a work life, a relationship status and a personal detail ---------- */
+  var OPEN_ST = ['single and happy to meet new people', 'single, a few months out of a long relationship, taking things slowly', 'casually dating but nothing serious', 'single and focused on work right now',
+    'single and a little tired of dating apps', 'single, and says yes to most invitations'];
+  var TAKEN_ST = ['in a relationship of about two years', 'engaged', 'in a long relationship, your partner is away this week', 'married for a few years'];
+  var WORK_NOTE = ['You love your work.', 'You are thinking about changing careers.', 'You were recently promoted.', 'You work odd hours.', 'You moved to the city for the job.', 'You are quietly burnt out.',
+    'You are studying part-time on the side.', 'You have been at the same place for ten years.', 'You run a small side project.'];
+  var FACTS = ['You live with a rescue dog.', 'You are learning an instrument.', 'You train for a race on weekends.', 'You cook for the whole family on Sundays.', 'You have a sister who lives abroad.',
+    'You just got back from a long trip.', 'You collect old maps.', 'You volunteer at a community centre.', 'You are saving for a first home.', 'You have a stubborn sweet tooth.', 'You sing in a choir.',
+    'You grew up in a small town and still miss it.', 'You are trying to read more books this year.', 'You are a lifelong fan of one football club.', 'You cannot stand being late.', 'You play chess online most nights.'];
+  /** Returns {status, taken, work, fact, text}. opts.taken forces taken/free; opts.age shapes the details. */
+  function life(opts) {
+    opts = opts || {};
+    var taken = opts.taken !== undefined ? opts.taken : Math.random() < 0.14;
+    var status = opts.status || (taken ? pk(TAKEN_ST) : pk(OPEN_ST));
+    var work = opts.work || pk(WORK_NOTE), fact = opts.fact || pk(FACTS);
+    return { status: status, taken: taken, work: work, fact: fact,
+      text: 'Relationship status: ' + status + '. Work: ' + work + ' Personal detail: ' + fact };
+  }
+
   function pk(a) { return a[Math.floor(Math.random() * a.length)]; }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
@@ -44,7 +64,7 @@
   }
 
   function profile(a) {
-    return 'You are ' + a.name + (a.age ? ', ' + a.age : '') + (a.job ? ', ' + a.job : '') + '. ' + (a.role ? 'Your part here: ' + a.role + '. ' : '') + (a.who ? a.who + ' ' : '') + (a.trait ? 'You ' + a.trait + '. ' : '');
+    return 'You are ' + a.name + (a.age ? ', ' + a.age : '') + (a.job ? ', ' + a.job : '') + '. ' + (a.role ? 'Your part here: ' + a.role + '. ' : '') + (a.bio ? a.bio + ' ' : '') + (a.who ? a.who + ' ' : '') + (a.trait ? 'You ' + a.trait + '. ' : '');
   }
 
   /* ---------- building the cast ---------- */
@@ -54,7 +74,7 @@
     var name = pool[0] || ('Guest ' + (i + 1)); used.push(name);
     var jobs = (spec && spec.jobs) || JOBS, traits = (spec && spec.traits) || TRAITS;
     return { id: 'a' + i, name: name, gender: gender, age: 20 + Math.floor(Math.random() * 50), job: pk(jobs), role: (spec && spec.role) || 'a member of the audience', trait: pk(traits),
-      talks: false, rates: true, crowd: true };
+      bio: life({ taken: Math.random() < 0.4 }).text + ((spec && typeof spec.where === 'string') ? ' You are here ' + spec.where + '.' : ''), talks: false, rates: true, crowd: true };
   }
 
   /* ---------- who speaks ---------- */
@@ -201,5 +221,5 @@
     return res.yes > res.no;
   }
 
-  window.ReachGroup = { plan: plan, speak: speak, rate: rate, decide: decide, crowdAgent: crowdAgent, transcript: transcript, TRAITS: TRAITS, JOBS: JOBS, pk: pk, shuffle: shuffle };
+  window.ReachGroup = { plan: plan, speak: speak, rate: rate, decide: decide, crowdAgent: crowdAgent, life: life, transcript: transcript, TRAITS: TRAITS, JOBS: JOBS, pk: pk, shuffle: shuffle };
 })();
