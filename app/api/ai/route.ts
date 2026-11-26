@@ -45,8 +45,10 @@ export async function POST(req: NextRequest) {
   if (!turns) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   const review = body.tier === "default";
 
-  const gkey = process.env.GEMINI_API_KEY;
-  if (gkey) {
+  // Gemini: up to two keys and three models. Each model is tried with key 1, then key 2; on a failure
+  // (quota, outage, unknown model, empty or broken reply) it moves on to the next. A key the API rejects is skipped for the rest.
+  const gkeys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter((k): k is string => !!k && k.trim().length > 0).map((k) => k.trim());
+  if (gkeys.length) {
     // Same conversion as public/game/ai.js: the first turn is the character's rules (system instruction).
     let sys: string | null = null;
     const contents: { role: string; parts: { text: string }[] }[] = [];
@@ -57,28 +59,42 @@ export async function POST(req: NextRequest) {
       if (last && last.role === role) last.parts.push({ text: t.content });
       else contents.push({ role, parts: [{ text: t.content }] });
     });
-    const gmodel = review ? process.env.AI_MODEL_DEFAULT || "gemini-3.8-flash" : process.env.AI_MODEL_QUICK || "gemini-3.5-flash-lite";
+    const fromEnv = (v?: string) => (v || "").split(",").map((m) => m.trim()).filter(Boolean);
+    const models = review
+      ? fromEnv(process.env.GEMINI_MODELS_REVIEW).length ? fromEnv(process.env.GEMINI_MODELS_REVIEW) : ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
+      : fromEnv(process.env.GEMINI_MODELS_QUICK).length ? fromEnv(process.env.GEMINI_MODELS_QUICK) : ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash"];
     const gbody: Record<string, unknown> = { contents, generationConfig: { responseMimeType: "application/json", maxOutputTokens: review ? 8192 : 2048 } };
     if (sys) gbody.systemInstruction = { parts: [{ text: sys }] };
-    try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gmodel)}:generateContent`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": gkey },
-        body: JSON.stringify(gbody),
-        signal: AbortSignal.timeout(55_000),
-      });
-      if (r.status === 429) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
-      if (!r.ok) {
-        console.error("gemini error", r.status, gmodel, (await r.text()).slice(0, 300));
-        return NextResponse.json({ error: "upstream" }, { status: 502 });
+    const t0 = Date.now();
+    const deadKeys = new Set<number>();
+    let sawRate = false;
+    for (const gmodel of models.slice(0, 3)) {
+      for (let ki = 0; ki < gkeys.length; ki++) {
+        if (deadKeys.has(ki)) continue;
+        const left = 55_000 - (Date.now() - t0);
+        if (left < 4_000) break;
+        try {
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gmodel)}:generateContent`, {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-goog-api-key": gkeys[ki] },
+            body: JSON.stringify(gbody),
+            signal: AbortSignal.timeout(Math.min(left, 25_000)),
+          });
+          if (!r.ok) {
+            if (r.status === 429) sawRate = true;
+            if (r.status === 400 || r.status === 401 || r.status === 403) { if (r.status !== 400) deadKeys.add(ki); }
+            console.error("gemini error", r.status, gmodel, "key", ki + 1, (await r.text()).slice(0, 200));
+            continue;
+          }
+          const data = await r.json();
+          const text: string = (data.candidates?.[0]?.content?.parts || []).map((c: { text?: string }) => c.text || "").join("");
+          return NextResponse.json(pickJson(text), { headers: { "x-ai-mode": "live", "x-ai-model": gmodel, "x-ai-key": String(ki + 1) } });
+        } catch (e) {
+          console.error("gemini attempt failed", gmodel, "key", ki + 1, e instanceof Error ? e.message : e);
+        }
       }
-      const data = await r.json();
-      const text: string = (data.candidates?.[0]?.content?.parts || []).map((c: { text?: string }) => c.text || "").join("");
-      return NextResponse.json(pickJson(text), { headers: { "x-ai-mode": "live" } });
-    } catch (e) {
-      console.error("gemini route failed", e instanceof Error ? e.message : e);
-      return NextResponse.json({ error: "upstream" }, { status: 502 });
     }
+    return NextResponse.json({ error: sawRate ? "rate_limited" : "upstream" }, { status: sawRate ? 429 : 502 });
   }
 
   const key = process.env.ANTHROPIC_API_KEY;
