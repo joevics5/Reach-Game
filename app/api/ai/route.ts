@@ -32,7 +32,7 @@ function clean(raw: unknown): Turn[] | null {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
-  if (!allow(ip, Number(process.env.AI_RATE_LIMIT) || 30)) {
+  if (!allow(ip, Number(process.env.AI_RATE_LIMIT) || 120)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
   let body: { turns?: unknown; tier?: unknown };
@@ -44,6 +44,42 @@ export async function POST(req: NextRequest) {
   const turns = clean(body.turns);
   if (!turns) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   const review = body.tier === "default";
+
+  const gkey = process.env.GEMINI_API_KEY;
+  if (gkey) {
+    // Same conversion as public/game/ai.js: the first turn is the character's rules (system instruction).
+    let sys: string | null = null;
+    const contents: { role: string; parts: { text: string }[] }[] = [];
+    turns.forEach((t, i) => {
+      if (i === 0 && t.role === "user" && turns.length > 1) { sys = t.content; return; }
+      const role = t.role === "assistant" ? "model" : "user";
+      const last = contents[contents.length - 1];
+      if (last && last.role === role) last.parts.push({ text: t.content });
+      else contents.push({ role, parts: [{ text: t.content }] });
+    });
+    const gmodel = review ? process.env.AI_MODEL_DEFAULT || "gemini-3.8-flash" : process.env.AI_MODEL_QUICK || "gemini-3.5-flash-lite";
+    const gbody: Record<string, unknown> = { contents, generationConfig: { responseMimeType: "application/json", maxOutputTokens: review ? 8192 : 2048 } };
+    if (sys) gbody.systemInstruction = { parts: [{ text: sys }] };
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(gmodel)}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": gkey },
+        body: JSON.stringify(gbody),
+        signal: AbortSignal.timeout(55_000),
+      });
+      if (r.status === 429) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+      if (!r.ok) {
+        console.error("gemini error", r.status, gmodel, (await r.text()).slice(0, 300));
+        return NextResponse.json({ error: "upstream" }, { status: 502 });
+      }
+      const data = await r.json();
+      const text: string = (data.candidates?.[0]?.content?.parts || []).map((c: { text?: string }) => c.text || "").join("");
+      return NextResponse.json(pickJson(text), { headers: { "x-ai-mode": "live" } });
+    } catch (e) {
+      console.error("gemini route failed", e instanceof Error ? e.message : e);
+      return NextResponse.json({ error: "upstream" }, { status: 502 });
+    }
+  }
 
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {

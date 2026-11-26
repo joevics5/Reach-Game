@@ -9,7 +9,7 @@ Right now: the dashboard, both challenge lists, and challenge 1 of Rizz ("Break 
 - **Next.js 15 (App Router) + TypeScript** for the app shell, the API and deployment
 - **Vanilla JavaScript + Three.js r128** for the game itself (`public/game/game.js`): UI flow, procedural 3D bar, animated characters
 - **Gemini** for character replies and the review, called from the browser with a key the player saves in Settings (`public/game/ai.js`). Default models: `gemini-3.5-flash-lite` (replies) and `gemini-3.8-flash` (review).
-- Without a key the game falls back to `app/api/ai/route.ts` (demo replies, or Anthropic if `ANTHROPIC_API_KEY` is set on the server)
+- Without a key the game falls back to `app/api/ai/route.ts` (demo replies, or Gemini if `GEMINI_API_KEY` is set on the server, else Anthropic if `ANTHROPIC_API_KEY` is set)
 - Installable as a PWA (`public/manifest.webmanifest`, `public/sw.js`)
 
 ## Run it
